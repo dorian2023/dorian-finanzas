@@ -11,6 +11,7 @@ import { HistoryView } from './features/transactions/HistoryView';
 import { TasksView } from './features/tasks/TasksView';
 import { DebtsView } from './features/debts/DebtsView';
 import { AnalyticsView } from './features/analytics/AnalyticsView';
+import { CalendarView } from './features/calendar/CalendarView';
 import { TransactionModal } from './features/transactions/TransactionModal';
 import { RateModal } from './features/exchange-rate/RateModal';
 import { TaskModal } from './features/tasks/TaskModal';
@@ -25,7 +26,7 @@ import type { Account, Category, IncomeSource, Transaction, TransactionType } fr
 import type { TaskReminder } from './features/tasks/types';
 import type { Debt } from './features/debts/types';
 
-export type ActiveTab = 'home' | 'history' | 'analytics' | 'debts' | 'tasks';
+export type ActiveTab = 'home' | 'history' | 'analytics' | 'debts' | 'tasks' | 'calendar';
 export type ThemeMode = 'dark' | 'light';
 
 export function App() {
@@ -146,18 +147,35 @@ export function App() {
     refreshData();
   };
 
+  const [txModalDate, setTxModalDate] = useState<string | undefined>(undefined);
+
   const handleOpenExpense = () => {
     setTxModalType('expense');
+    setTxModalDate(undefined);
     setIsTxModalOpen(true);
   };
 
   const handleOpenIncome = () => {
     setTxModalType('income');
+    setTxModalDate(undefined);
     setIsTxModalOpen(true);
   };
 
   const handleOpenExchange = () => {
     setTxModalType('exchange');
+    setTxModalDate(undefined);
+    setIsTxModalOpen(true);
+  };
+
+  const handleOpenExpenseForDate = (dateStr: string) => {
+    setTxModalType('expense');
+    setTxModalDate(dateStr);
+    setIsTxModalOpen(true);
+  };
+
+  const handleOpenIncomeForDate = (dateStr: string) => {
+    setTxModalType('income');
+    setTxModalDate(dateStr);
     setIsTxModalOpen(true);
   };
 
@@ -186,6 +204,7 @@ export function App() {
             onOpenTaskModal={() => setIsTaskModalOpen(true)}
             onToggleTask={handleToggleTask}
             onNavigateToTab={(tab) => setActiveTab(tab)}
+            onOpenCalendar={() => setActiveTab('calendar')}
           />
         )}
 
@@ -228,6 +247,20 @@ export function App() {
               setTxModalType('expense');
               setIsTxModalOpen(true);
             }}
+          />
+        )}
+
+        {activeTab === 'calendar' && (
+          <CalendarView
+            todayRate={activeRate}
+            transactions={transactions}
+            accounts={accounts}
+            categories={categories}
+            tasks={tasks}
+            onToggleTask={handleToggleTask}
+            onBackToHome={() => setActiveTab('home')}
+            onOpenAddExpenseForDate={handleOpenExpenseForDate}
+            onOpenAddIncomeForDate={handleOpenIncomeForDate}
           />
         )}
       </main>
@@ -289,11 +322,15 @@ export function App() {
       <TransactionModal
         isOpen={isTxModalOpen}
         initialType={txModalType}
+        initialDate={txModalDate}
         todayRate={activeRate}
         accounts={accounts}
         categories={categories}
         sources={sources}
-        onClose={() => setIsTxModalOpen(false)}
+        onClose={() => {
+          setIsTxModalOpen(false);
+          setTxModalDate(undefined);
+        }}
         onSuccess={refreshData}
       />
 

@@ -14,7 +14,8 @@ import {
   HandCoins,
   Settings,
   Sun,
-  Moon
+  Moon,
+  Calendar
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import type { Account, Category, Transaction } from '../transactions/types';
@@ -44,6 +45,7 @@ interface DashboardViewProps {
   onOpenTaskModal: () => void;
   onToggleTask: (id: string) => void;
   onNavigateToTab: (tab: 'history' | 'tasks' | 'debts' | 'analytics') => void;
+  onOpenCalendar: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -66,6 +68,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenTaskModal,
   onToggleTask,
   onNavigateToTab,
+  onOpenCalendar,
 }) => {
   // Calcular saldos por cuenta
   const accountBalances = accounts.map((acc) => {
@@ -157,14 +160,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Controles: Selector de Tema (Dark / Light) y Engranaje de Configuración */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Controles: Calendario, Selector de Tema (Dark / Light) y Engranaje de Configuración */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            onClick={onOpenCalendar}
+            className="btn-icon"
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 'var(--radius-full)',
+              background: theme === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.05)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="Abrir Calendario y Diario Financiero"
+            aria-label="Abrir Calendario y Diario Financiero"
+          >
+            <Calendar size={17} color="var(--text-secondary)" />
+          </button>
+
           <button
             onClick={onToggleTheme}
             className="btn-icon"
             style={{
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               borderRadius: 'var(--radius-full)',
               background: theme === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.05)',
               border: '1px solid var(--border-subtle)',
@@ -177,9 +200,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             aria-label="Cambiar tema claro u oscuro"
           >
             {theme === 'dark' ? (
-              <Sun size={18} color="#fbbf24" style={{ filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.4))' }} />
+              <Sun size={17} color="#fbbf24" style={{ filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.4))' }} />
             ) : (
-              <Moon size={18} color="#6366f1" style={{ filter: 'drop-shadow(0 0 4px rgba(99, 102, 241, 0.3))' }} />
+              <Moon size={17} color="#6366f1" style={{ filter: 'drop-shadow(0 0 4px rgba(99, 102, 241, 0.3))' }} />
             )}
           </button>
 
@@ -187,8 +210,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={onOpenRateModal}
             className="btn-icon"
             style={{
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               borderRadius: 'var(--radius-full)',
               background: theme === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.05)',
               border: '1px solid var(--border-subtle)',
@@ -200,7 +223,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             title="Configurar y sincronizar tasas"
             aria-label="Configuración de tasas"
           >
-            <Settings size={18} color="var(--text-secondary)" />
+            <Settings size={17} color="var(--text-secondary)" />
           </button>
         </div>
       </div>
@@ -520,6 +543,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <span style={{ fontSize: 11, fontWeight: 700 }}>+ Tarea</span>
         </button>
+      </div>
+
+      {/* Acceso directo a Diario Financiero & Calendario */}
+      <div
+        onClick={onOpenCalendar}
+        className="glass-panel"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 14px',
+          borderRadius: 16,
+          border: '1px solid var(--border-subtle)',
+          background: 'var(--bg-card)',
+          marginBottom: 18,
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              background: 'rgba(16, 185, 129, 0.14)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-usd)',
+            }}
+          >
+            <Calendar size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Diario Financiero & Calendario
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+              Consulta o registra gastos, ingresos y notas por fecha
+            </div>
+          </div>
+        </div>
+        <ChevronRight size={18} color="var(--text-tertiary)" />
       </div>
 
       {/* Sección: Mis Cuentas y Bolsillos */}

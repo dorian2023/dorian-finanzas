@@ -16,6 +16,7 @@ import { DatabaseService } from '../../shared/lib/dbService';
 interface TransactionModalProps {
   isOpen: boolean;
   initialType?: TransactionType;
+  initialDate?: string; // YYYY-MM-DD
   todayRate: number;
   accounts: Account[];
   categories: Category[];
@@ -27,6 +28,7 @@ interface TransactionModalProps {
 export const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
   initialType = 'expense',
+  initialDate,
   todayRate,
   accounts,
   categories,
@@ -35,6 +37,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   onSuccess,
 }) => {
   const [type, setType] = useState<TransactionType>(initialType);
+  const [txDate, setTxDate] = useState<string>(initialDate || new Date().toISOString().split('T')[0]);
   const [amountInput, setAmountInput] = useState('');
   const [currency, setCurrency] = useState<Currency>('USD');
   const [accountId, setAccountId] = useState(accounts[0]?.id || '');
@@ -61,6 +64,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   React.useEffect(() => {
     if (isOpen) {
       setType(initialType);
+      setTxDate(initialDate || new Date().toISOString().split('T')[0]);
       resetForm();
 
       // Asegurar que la cuenta seleccionada sea válida y exista
@@ -135,7 +139,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     const finalAccountId = effectiveAcc ? effectiveAcc.id : (accounts[0]?.id || 'acc-usd-cash');
     const finalCurrency = currency || effectiveAcc?.currency || 'USD';
 
-    const newTx: Omit<Transaction, 'id' | 'occurredAt'> = {
+    const occurredAt = txDate
+      ? (txDate.includes('T') ? txDate : `${txDate}T12:00:00.000Z`)
+      : new Date().toISOString();
+
+    const newTx: Omit<Transaction, 'id' | 'occurredAt'> & { occurredAt: string } = {
       type,
       accountId: finalAccountId,
       amountMinor,
@@ -147,6 +155,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       note: note.trim() || undefined,
       receiptUrl: receiptPreview || undefined,
       toAccountId: type === 'exchange' ? (toAccountId || accounts.find((a) => a.id !== finalAccountId)?.id) : undefined,
+      occurredAt,
     };
 
     await DatabaseService.saveTransaction(newTx);
@@ -584,7 +593,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           )}
 
           {/* Comercio y Notas */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <input
               type="text"
               placeholder={type === 'expense' ? 'Comercio / Taller (ej. Repuestos Moto)' : 'Detalle'}
@@ -598,6 +607,28 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               style={{ flex: 1, fontSize: 13 }}
+            />
+          </div>
+
+          {/* Fecha de la Transacción */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)', marginBottom: 5, fontWeight: 700, textTransform: 'uppercase' }}>
+              Fecha de la operación
+            </label>
+            <input
+              type="date"
+              value={txDate}
+              onChange={(e) => setTxDate(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                fontSize: 13,
+                fontWeight: 600,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--input-bg)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-primary)',
+              }}
             />
           </div>
 
