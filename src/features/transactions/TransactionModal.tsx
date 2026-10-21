@@ -7,11 +7,13 @@ import {
   TrendingUp,
   ArrowRightLeft,
   Sparkles,
-  ImageIcon
+  ImageIcon,
+  AlertCircle
 } from 'lucide-react';
 import type { Account, Category, IncomeSource, Transaction, TransactionType } from './types';
 import { formatMoney, toMinor, type Currency } from '../../shared/lib/money';
 import { DatabaseService } from '../../shared/lib/dbService';
+import { compressImage } from '../../shared/lib/imageCompressor';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -48,8 +50,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [note, setNote] = useState('');
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
     setAmountInput('');
@@ -57,6 +62,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setNote('');
     setReceiptPreview(null);
     setIsScanning(false);
+    setErrorMessage(null);
+    setIsSubmitting(false);
     if (cameraInputRef.current) cameraInputRef.current.value = '';
     if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
@@ -108,14 +115,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setReceiptPreview(reader.result as string);
-        // Simular escaneo de prueba inteligente
+      try {
         setIsScanning(true);
+        // Comprimir imagen a tamaño liviano para móviles y localStorage
+        const compressed = await compressImage(file, 800, 0.7);
+        setReceiptPreview(compressed);
         setTimeout(() => {
           setIsScanning(false);
           // Si no había puesto monto, sugerir
@@ -124,44 +131,60 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             setMerchant('Comercio según Factura');
             setNote('Factura escaneada con respaldo de imagen');
           }
-        }, 1200);
-      };
-      reader.readAsDataURL(file);
+        }, 800);
+      } catch (err) {
+        console.error('Error procesando imagen:', err);
+        setIsScanning(false);
+      }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
     const amountMinor = toMinor(amountInput);
-    if (amountMinor <= 0) return;
+    if (amountMinor <= 0) {
+      setErrorMessage('Por favor escribe un monto mayor a 0');
+      amountInputRef.current?.focus();
+      return;
+    }
 
-    const effectiveAcc = accounts.find((a) => a.id === accountId) || accounts[0];
-    const finalAccountId = effectiveAcc ? effectiveAcc.id : (accounts[0]?.id || 'acc-usd-cash');
-    const finalCurrency = currency || effectiveAcc?.currency || 'USD';
+    setIsSubmitting(true);
+    try {
+      const effectiveAcc = accounts.find((a) => a.id === accountId) || accounts[0];
+      const finalAccountId = effectiveAcc ? effectiveAcc.id : (accounts[0]?.id || 'acc-usd-cash');
+      const finalCurrency = currency || effectiveAcc?.currency || 'USD';
 
-    const occurredAt = txDate
-      ? (txDate.includes('T') ? txDate : `${txDate}T12:00:00.000Z`)
-      : new Date().toISOString();
+      const occurredAt = txDate
+        ? (txDate.includes('T') ? txDate : `${txDate}T12:00:00.000Z`)
+        : new Date().toISOString();
 
-    const newTx: Omit<Transaction, 'id' | 'occurredAt'> & { occurredAt: string } = {
-      type,
-      accountId: finalAccountId,
-      amountMinor,
-      currency: finalCurrency,
-      rateUsed: todayRate,
-      categoryId: type === 'expense' ? (categoryId || categories[0]?.id) : undefined,
-      sourceId: type === 'income' ? (sourceId || sources[0]?.id) : undefined,
-      merchant: merchant.trim() || undefined,
-      note: note.trim() || undefined,
-      receiptUrl: receiptPreview || undefined,
-      toAccountId: type === 'exchange' ? (toAccountId || accounts.find((a) => a.id !== finalAccountId)?.id) : undefined,
-      occurredAt,
-    };
+      const newTx: Omit<Transaction, 'id' | 'occurredAt'> & { occurredAt: string } = {
+        type,
+        accountId: finalAccountId,
+        amountMinor,
+        currency: finalCurrency,
+        rateUsed: todayRate,
+        categoryId: type === 'expense' ? (categoryId || categories[0]?.id) : undefined,
+        sourceId: type === 'income' ? (sourceId || sources[0]?.id) : undefined,
+        merchant: merchant.trim() || undefined,
+        note: note.trim() || undefined,
+        receiptUrl: receiptPreview || undefined,
+        toAccountId: type === 'exchange' ? (toAccountId || accounts.find((a) => a.id !== finalAccountId)?.id) : undefined,
+        occurredAt,
+      };
 
-    await DatabaseService.saveTransaction(newTx);
-    resetForm();
-    onSuccess();
-    onClose();
+      await DatabaseService.saveTransaction(newTx);
+      resetForm();
+      onSuccess();
+      onClose();
+    } catch (err) {
+      console.error('Error guardando transacción:', err);
+      setErrorMessage('Error al guardar. Intenta nuevamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const numericValue = toMinor(amountInput);
@@ -399,6 +422,28 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* Mensaje de Error Visible si falta monto */}
+          {errorMessage && (
+            <div
+              style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid #ef4444',
+                color: '#f87171',
+                padding: '9px 12px',
+                borderRadius: 'var(--radius-md)',
+                fontSize: 12,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
+              <AlertCircle size={16} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Monto y Moneda */}
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 700, textTransform: 'uppercase' }}>
@@ -407,19 +452,22 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <div style={{ display: 'flex', gap: 8 }}>
               <div style={{ position: 'relative', flex: 1 }}>
                 <input
+                  ref={amountInputRef}
                   type="text"
                   inputMode="decimal"
-                  autoFocus
-                  required
                   placeholder="0.00"
                   value={amountInput}
-                  onChange={(e) => setAmountInput(e.target.value)}
+                  onChange={(e) => {
+                    setErrorMessage(null);
+                    setAmountInput(e.target.value);
+                  }}
                   style={{
                     fontSize: 28,
                     fontWeight: 800,
                     fontFamily: 'var(--font-mono)',
                     color: type === 'expense' ? 'var(--color-expense)' : 'var(--color-usd)',
                     padding: '12px 16px',
+                    border: errorMessage ? '1.5px solid #ef4444' : '1px solid var(--border-subtle)',
                   }}
                 />
               </div>
@@ -634,9 +682,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           <button
             type="submit"
+            disabled={isSubmitting}
             className="btn-primary"
             style={{
               width: '100%',
+              opacity: isSubmitting ? 0.7 : 1,
               background:
                 type === 'expense'
                   ? 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)'
@@ -646,9 +696,16 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 type === 'expense'
                   ? '0 4px 20px rgba(244, 63, 94, 0.4)'
                   : '0 4px 20px rgba(16, 185, 129, 0.4)',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
             }}
           >
-            <Check size={18} /> Guardar {type === 'expense' ? 'Gasto' : type === 'income' ? 'Ingreso' : 'Cambio'}
+            {isSubmitting ? (
+              <span>Guardando...</span>
+            ) : (
+              <>
+                <Check size={18} /> Guardar {type === 'expense' ? 'Gasto' : type === 'income' ? 'Ingreso' : 'Cambio'}
+              </>
+            )}
           </button>
         </form>
       </div>

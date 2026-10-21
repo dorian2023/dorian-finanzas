@@ -144,7 +144,18 @@ export const StorageService = {
       occurredAt: tx.occurredAt || new Date().toISOString(),
     };
     transactions.unshift(newTx);
-    localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
+    try {
+      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
+    } catch (err) {
+      console.warn('Almacenamiento local lleno, guardando transacción ligera sin imagen pesada:', err);
+      // Fallback para no bloquear al usuario si localStorage está lleno
+      try {
+        const lightweight = transactions.map((t) => ({ ...t, receiptUrl: undefined }));
+        localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(lightweight));
+      } catch (innerErr) {
+        console.error('Error crítico en localStorage:', innerErr);
+      }
+    }
     return newTx;
   },
 
