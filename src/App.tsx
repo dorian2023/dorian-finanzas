@@ -26,9 +26,29 @@ import type { TaskReminder } from './features/tasks/types';
 import type { Debt } from './features/debts/types';
 
 export type ActiveTab = 'home' | 'history' | 'analytics' | 'debts' | 'tasks';
+export type ThemeMode = 'dark' | 'light';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+
+  // Tema Dark / Light
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('dorian_theme') as ThemeMode;
+    return saved === 'light' ? 'light' : 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('dorian_theme', theme);
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', theme === 'dark' ? '#080c14' : '#f1f5f9');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Tasas duales BCV & Binance
   const [rateConfig, setRateConfig] = useState<RateConfig>(ExchangeRateService.getConfig());
@@ -147,6 +167,8 @@ export function App() {
       <main style={{ flex: 1 }}>
         {activeTab === 'home' && (
           <DashboardView
+            theme={theme}
+            onToggleTheme={toggleTheme}
             todayRate={activeRate}
             bcvRate={rateConfig.bcv}
             binanceRate={rateConfig.binance}

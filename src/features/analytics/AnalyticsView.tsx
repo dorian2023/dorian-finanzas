@@ -124,7 +124,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         {/* Selector de Período */}
         <div style={{
           display: 'flex',
-          background: 'rgba(255, 255, 255, 0.05)',
+          background: 'var(--badge-bg-neutral)',
           padding: 3,
           borderRadius: 'var(--radius-full)',
           border: '1px solid var(--border-subtle)',
@@ -136,8 +136,9 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               borderRadius: 'var(--radius-full)',
               fontSize: 11,
               fontWeight: 700,
-              background: period === 'month' ? 'rgba(16, 185, 129, 0.2)' : 'none',
+              background: period === 'month' ? 'var(--act-income-bg)' : 'transparent',
               color: period === 'month' ? 'var(--color-usd)' : 'var(--text-secondary)',
+              border: period === 'month' ? '1px solid var(--act-income-border)' : 'none',
             }}
           >
             Este Mes
@@ -149,8 +150,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               borderRadius: 'var(--radius-full)',
               fontSize: 11,
               fontWeight: 700,
-              background: period === 'all' ? 'rgba(255, 255, 255, 0.15)' : 'none',
-              color: period === 'all' ? 'var(--text-primary)' : 'var(--text-secondary)',
+              background: period === 'all' ? 'var(--text-primary)' : 'transparent',
+              color: period === 'all' ? 'var(--bg-app)' : 'var(--text-secondary)',
             }}
           >
             Histórico

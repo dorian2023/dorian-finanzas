@@ -11,10 +11,12 @@ import {
   ChevronRight,
   Sparkles,
   Camera,
-  HandCoins
+  HandCoins,
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { Settings } from 'lucide-react';
 import type { Account, Category, Transaction } from '../transactions/types';
 import type { TaskReminder } from '../tasks/types';
 import type { Debt } from '../debts/types';
@@ -23,6 +25,8 @@ import { formatMoney } from '../../shared/lib/money';
 import { getTodayDateStr } from '../../shared/lib/storage';
 
 interface DashboardViewProps {
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
   todayRate: number;
   bcvRate: number;
   binanceRate: number;
@@ -43,6 +47,8 @@ interface DashboardViewProps {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
+  theme,
+  onToggleTheme,
   todayRate,
   bcvRate,
   binanceRate,
@@ -205,6 +211,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </span>
           </button>
 
+          {/* Botón Selector de Tema (Dark / Light) */}
+          <button
+            onClick={onToggleTheme}
+            className="btn-icon"
+            style={{ width: 36, height: 36, padding: 0 }}
+            title={theme === 'dark' ? 'Cambiar a modo claro (Día)' : 'Cambiar a modo oscuro (Noche)'}
+          >
+            {theme === 'dark' ? <Sun size={17} color="#fbbf24" /> : <Moon size={17} color="#6366f1" />}
+          </button>
+
           {/* Botón Configurar / Actualizar */}
           <button
             onClick={onOpenRateModal}
@@ -221,8 +237,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div
         className="glass-panel pulse-glow"
         style={{
-          background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%)',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
+          background: 'var(--hero-gradient)',
+          border: '1px solid var(--hero-border)',
           borderRadius: 24,
           padding: 20,
           position: 'relative',
@@ -237,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           width: 130,
           height: 130,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%)',
+          background: 'var(--hero-glow)',
           pointerEvents: 'none'
         }} />
 
@@ -317,16 +333,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             gap: 6,
             padding: '14px 6px',
             borderRadius: 'var(--radius-lg)',
-            background: 'rgba(244, 63, 94, 0.12)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
-            color: '#fb7185',
+            background: 'var(--act-expense-bg)',
+            border: '1px solid var(--act-expense-border)',
+            color: 'var(--act-expense-text)',
           }}
         >
           <div style={{
             width: 38,
             height: 38,
             borderRadius: '50%',
-            background: 'rgba(244, 63, 94, 0.2)',
+            background: 'var(--act-expense-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -344,16 +360,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             gap: 6,
             padding: '14px 6px',
             borderRadius: 'var(--radius-lg)',
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            color: '#34d399',
+            background: 'var(--act-income-bg)',
+            border: '1px solid var(--act-income-border)',
+            color: 'var(--act-income-text)',
           }}
         >
           <div style={{
             width: 38,
             height: 38,
             borderRadius: '50%',
-            background: 'rgba(16, 185, 129, 0.2)',
+            background: 'var(--act-income-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -371,16 +387,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             gap: 6,
             padding: '14px 6px',
             borderRadius: 'var(--radius-lg)',
-            background: 'rgba(56, 189, 248, 0.12)',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
-            color: '#38bdf8',
+            background: 'var(--act-exchange-bg)',
+            border: '1px solid var(--act-exchange-border)',
+            color: 'var(--act-exchange-text)',
           }}
         >
           <div style={{
             width: 38,
             height: 38,
             borderRadius: '50%',
-            background: 'rgba(56, 189, 248, 0.2)',
+            background: 'var(--act-exchange-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -398,16 +414,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             gap: 6,
             padding: '14px 6px',
             borderRadius: 'var(--radius-lg)',
-            background: 'rgba(6, 182, 212, 0.12)',
-            border: '1px solid rgba(6, 182, 212, 0.3)',
-            color: 'var(--color-task)',
+            background: 'var(--act-task-bg)',
+            border: '1px solid var(--act-task-border)',
+            color: 'var(--act-task-text)',
           }}
         >
           <div style={{
             width: 38,
             height: 38,
             borderRadius: '50%',
-            background: 'rgba(6, 182, 212, 0.2)',
+            background: 'var(--act-task-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

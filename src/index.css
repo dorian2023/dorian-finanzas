@@ -1,25 +1,30 @@
 /* =====================================================================
    DORIAN FINANZAS - DESIGN SYSTEM & TOKENS (PWA MOBILE-FIRST)
+   Soporte Bimonetario: Dark Mode & Light Mode (Impeccable Craft)
    ===================================================================== */
 
-:root {
-  /* Color Palette */
+:root,
+[data-theme="dark"] {
+  /* Color Palette - Dark Obsidian Mode */
   --bg-app: #080c14;
   --bg-surface: #0f172a;
   --bg-surface-elevated: #1e293b;
   --bg-surface-glass: rgba(15, 23, 42, 0.75);
   --bg-surface-glass-card: rgba(30, 41, 59, 0.65);
-  
+  --hero-gradient: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+  --hero-border: rgba(16, 185, 129, 0.35);
+  --hero-glow: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+
   /* Borders & Highlights */
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-card: rgba(255, 255, 255, 0.12);
   --border-active: rgba(16, 185, 129, 0.5);
-  
-  /* Text */
+
+  /* Text Typography */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
-  
+
   /* Accents */
   --color-usd: #10b981;
   --color-usd-glow: rgba(16, 185, 129, 0.25);
@@ -30,23 +35,108 @@
   --color-task: #06b6d4;
   --color-task-glow: rgba(6, 182, 212, 0.25);
   --color-purple: #a855f7;
-  
+
+  /* Surfaces & Containers */
+  --nav-bg: rgba(8, 12, 20, 0.90);
+  --modal-bg: #0f172a;
+  --modal-handle: rgba(255, 255, 255, 0.2);
+  --input-bg: rgba(15, 23, 42, 0.85);
+  --root-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+  --root-border: 1px solid rgba(255, 255, 255, 0.04);
+  --badge-bg-neutral: rgba(255, 255, 255, 0.06);
+
+  /* Quick Actions Buttons */
+  --act-expense-bg: rgba(244, 63, 94, 0.12);
+  --act-expense-border: rgba(244, 63, 94, 0.3);
+  --act-expense-text: #fb7185;
+  --act-income-bg: rgba(16, 185, 129, 0.12);
+  --act-income-border: rgba(16, 185, 129, 0.3);
+  --act-income-text: #34d399;
+  --act-exchange-bg: rgba(56, 189, 248, 0.12);
+  --act-exchange-border: rgba(56, 189, 248, 0.3);
+  --act-exchange-text: #38bdf8;
+  --act-task-bg: rgba(6, 182, 212, 0.12);
+  --act-task-border: rgba(6, 182, 212, 0.3);
+  --act-task-text: #06b6d4;
+
   /* Typography */
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  
+
   /* Radii */
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
   --radius-full: 9999px;
-  
+
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
   --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
   --shadow-glow-usd: 0 0 25px rgba(16, 185, 129, 0.35);
   --shadow-glow-ves: 0 0 25px rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="light"] {
+  /* Color Palette - Light Solar Mode (Legibilidad extrema bajo el sol) */
+  --bg-app: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #e2e8f0;
+  --bg-surface-glass: rgba(255, 255, 255, 0.95);
+  --bg-surface-glass-card: #ffffff;
+  --hero-gradient: linear-gradient(145deg, #ffffff 0%, #ecfdf5 100%);
+  --hero-border: rgba(16, 185, 129, 0.45);
+  --hero-glow: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 70%);
+
+  /* Borders & Highlights */
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-card: rgba(15, 23, 42, 0.12);
+  --border-active: rgba(16, 185, 129, 0.7);
+
+  /* Text Typography - High Contrast */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+
+  /* Accents para fondo claro */
+  --color-usd: #059669;
+  --color-usd-glow: rgba(5, 150, 105, 0.2);
+  --color-ves: #d97706;
+  --color-ves-glow: rgba(217, 119, 6, 0.2);
+  --color-expense: #e11d48;
+  --color-expense-glow: rgba(225, 29, 72, 0.2);
+  --color-task: #0891b2;
+  --color-task-glow: rgba(8, 145, 178, 0.2);
+  --color-purple: #7e22ce;
+
+  /* Surfaces & Containers */
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --modal-bg: #ffffff;
+  --modal-handle: rgba(15, 23, 42, 0.2);
+  --input-bg: #f8fafc;
+  --root-shadow: 0 4px 30px rgba(15, 23, 42, 0.08);
+  --root-border: 1px solid rgba(15, 23, 42, 0.08);
+  --badge-bg-neutral: rgba(15, 23, 42, 0.05);
+
+  /* Quick Actions Buttons */
+  --act-expense-bg: #ffe4e6;
+  --act-expense-border: rgba(225, 29, 72, 0.35);
+  --act-expense-text: #be123c;
+  --act-income-bg: #dcfce7;
+  --act-income-border: rgba(5, 150, 105, 0.35);
+  --act-income-text: #047857;
+  --act-exchange-bg: #e0f2fe;
+  --act-exchange-border: rgba(2, 132, 199, 0.35);
+  --act-exchange-text: #0369a1;
+  --act-task-bg: #cffafe;
+  --act-task-border: rgba(8, 145, 178, 0.35);
+  --act-task-text: #0e7490;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 4px 15px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-glow-usd: 0 0 20px rgba(5, 150, 105, 0.2);
+  --shadow-glow-ves: 0 0 20px rgba(217, 119, 6, 0.2);
 }
 
 *, *::before, *::after {
@@ -66,6 +156,7 @@ html, body {
   line-height: 1.5;
   overflow-x: hidden;
   user-select: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* App Viewport Shell: Native Mobile feel on phone, centered column on desktop */
@@ -77,9 +168,10 @@ html, body {
   position: relative;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
-  border-left: 1px solid rgba(255, 255, 255, 0.04);
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: var(--root-shadow);
+  border-left: var(--root-border);
+  border-right: var(--root-border);
+  transition: background-color 0.2s ease;
 }
 
 /* Typography Utilities */
@@ -105,11 +197,12 @@ html, body {
 
 /* Glassmorphism Cards */
 .glass-panel {
-  background: var(--bg-surface-glass);
+  background: var(--hero-gradient);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .glass-card {
@@ -118,7 +211,8 @@ html, body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
 }
 
 .glass-card:active {
@@ -141,7 +235,7 @@ button {
 
 .btn-primary {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #042f2e;
+  color: #ffffff;
   font-weight: 700;
   padding: 14px 20px;
   border-radius: var(--radius-full);
@@ -154,7 +248,7 @@ button {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--badge-bg-neutral);
   color: var(--text-primary);
   padding: 12px 18px;
   border-radius: var(--radius-full);
@@ -169,13 +263,13 @@ button {
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--badge-bg-neutral);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
 }
 
 .btn-icon:active {
-  background: rgba(255, 255, 255, 0.12);
+  transform: scale(0.94);
 }
 
 /* Badges */
@@ -193,20 +287,20 @@ button {
 
 .badge-usd {
   background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--color-usd);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .badge-ves {
   background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-ves);
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .badge-danger {
   background: rgba(244, 63, 94, 0.15);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: var(--color-expense);
+  border: 1px solid rgba(244, 63, 94, 0.35);
 }
 
 /* Form Inputs */
@@ -214,8 +308,8 @@ input, select, textarea {
   font-family: var(--font-sans);
   font-size: 15px;
   color: var(--text-primary);
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid var(--border-subtle);
+  background: var(--input-bg);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
   padding: 12px 14px;
   outline: none;
@@ -236,7 +330,7 @@ input:focus, select:focus, textarea:focus {
   transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
-  background: rgba(8, 12, 20, 0.88);
+  background: var(--nav-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-subtle);
@@ -245,6 +339,7 @@ input:focus, select:focus, textarea:focus {
   justify-content: space-around;
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
   z-index: 50;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .nav-item {
@@ -272,8 +367,8 @@ input:focus, select:focus, textarea:focus {
   height: 58px;
   border-radius: var(--radius-full);
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #022c22;
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+  color: #ffffff;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45);
   border: 3px solid var(--bg-app);
 }
 
@@ -285,7 +380,7 @@ input:focus, select:focus, textarea:focus {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(6px);
   z-index: 100;
   display: flex;
@@ -298,18 +393,20 @@ input:focus, select:focus, textarea:focus {
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
-  background: #0f172a;
+  background: var(--modal-bg);
+  color: var(--text-primary);
   border-top: 1px solid var(--border-card);
   border-radius: 28px 28px 0 0;
   overflow-y: auto;
   padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 0px));
   animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .modal-handle {
   width: 44px;
   height: 5px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--modal-handle);
   border-radius: var(--radius-full);
   margin: -10px auto 18px;
 }
@@ -339,10 +436,10 @@ input:focus, select:focus, textarea:focus {
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+    box-shadow: var(--shadow-sm);
   }
   50% {
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.45);
+    box-shadow: var(--shadow-card);
   }
 }
 

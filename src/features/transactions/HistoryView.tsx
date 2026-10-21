@@ -54,8 +54,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             borderRadius: 'var(--radius-full)',
             fontSize: 12,
             fontWeight: 700,
-            background: selectedCurrency === 'ALL' ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)',
-            color: selectedCurrency === 'ALL' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            background: selectedCurrency === 'ALL' ? 'var(--text-primary)' : 'var(--badge-bg-neutral)',
+            color: selectedCurrency === 'ALL' ? 'var(--bg-app)' : 'var(--text-secondary)',
+            border: '1px solid var(--border-subtle)',
           }}
         >
           Todas
@@ -67,8 +68,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             borderRadius: 'var(--radius-full)',
             fontSize: 12,
             fontWeight: 700,
-            background: selectedCurrency === 'USD' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.04)',
+            background: selectedCurrency === 'USD' ? 'var(--act-income-bg)' : 'var(--badge-bg-neutral)',
             color: selectedCurrency === 'USD' ? 'var(--color-usd)' : 'var(--text-secondary)',
+            border: selectedCurrency === 'USD' ? '1px solid var(--act-income-border)' : '1px solid var(--border-subtle)',
           }}
         >
           Solo $ USD
@@ -80,8 +82,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             borderRadius: 'var(--radius-full)',
             fontSize: 12,
             fontWeight: 700,
-            background: selectedCurrency === 'VES' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255,255,255,0.04)',
+            background: selectedCurrency === 'VES' ? 'rgba(245, 158, 11, 0.18)' : 'var(--badge-bg-neutral)',
             color: selectedCurrency === 'VES' ? 'var(--color-ves)' : 'var(--text-secondary)',
+            border: selectedCurrency === 'VES' ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid var(--border-subtle)',
           }}
         >
           Solo Bs VES
