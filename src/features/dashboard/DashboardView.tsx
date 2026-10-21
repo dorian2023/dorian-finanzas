@@ -46,6 +46,7 @@ interface DashboardViewProps {
   onToggleTask: (id: string) => void;
   onNavigateToTab: (tab: 'history' | 'tasks' | 'debts' | 'analytics') => void;
   onOpenCalendar: () => void;
+  onOpenBellagio: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -69,6 +70,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onToggleTask,
   onNavigateToTab,
   onOpenCalendar,
+  onOpenBellagio,
 }) => {
   // Calcular saldos por cuenta
   const accountBalances = accounts.map((acc) => {
@@ -154,9 +156,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)', fontSize: 10, padding: '2px 8px' }}>
               <Shield size={10} /> Policía
             </span>
-            <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)', fontSize: 10, padding: '2px 8px' }}>
-              <Briefcase size={10} /> Bellagio
-            </span>
+            <button
+              type="button"
+              onClick={onOpenBellagio}
+              className="badge"
+              style={{
+                background: 'rgba(168, 85, 247, 0.18)',
+                color: '#c084fc',
+                border: '1.5px solid rgba(168, 85, 247, 0.45)',
+                fontSize: 10,
+                fontWeight: 800,
+                padding: '3px 9px',
+                cursor: 'pointer',
+                borderRadius: 'var(--radius-full)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                transition: 'all 0.15s ease',
+              }}
+              title="Abrir pedidos y comisiones (4%) de Muebles Bellagio"
+            >
+              <Briefcase size={10} /> Bellagio 4%
+            </button>
           </div>
         </div>
 

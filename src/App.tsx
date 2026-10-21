@@ -15,6 +15,7 @@ import { CalendarView } from './features/calendar/CalendarView';
 import { TransactionModal } from './features/transactions/TransactionModal';
 import { RateModal } from './features/exchange-rate/RateModal';
 import { TaskModal } from './features/tasks/TaskModal';
+import { BellagioSalesModal } from './features/bellagio/BellagioSalesModal';
 import { StorageService } from './shared/lib/storage';
 import { DatabaseService } from './shared/lib/dbService';
 import {
@@ -59,6 +60,7 @@ export function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tasks, setTasks] = useState<TaskReminder[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
+  const [isBellagioModalOpen, setIsBellagioModalOpen] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sources, setSources] = useState<IncomeSource[]>([]);
@@ -205,6 +207,7 @@ export function App() {
             onToggleTask={handleToggleTask}
             onNavigateToTab={(tab) => setActiveTab(tab)}
             onOpenCalendar={() => setActiveTab('calendar')}
+            onOpenBellagio={() => setIsBellagioModalOpen(true)}
           />
         )}
 
@@ -339,6 +342,14 @@ export function App() {
         categories={categories}
         onClose={() => setIsTaskModalOpen(false)}
         onSuccess={refreshData}
+      />
+
+      <BellagioSalesModal
+        isOpen={isBellagioModalOpen}
+        accounts={accounts}
+        todayRate={activeRate}
+        onClose={() => setIsBellagioModalOpen(false)}
+        onOrderPaidSuccess={refreshData}
       />
     </div>
   );
