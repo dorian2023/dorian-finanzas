@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "finanzas-bimonetarias",
+  "version": "1.0.0",
+  "description": "Reglas de dominio financiero bimonetario (USD / VES), manejo en céntimos sin flotantes, tasas de cambio y tareas para la app Dorian Finanzas.",
+  "category": "Domain",
+  "author": "Antigravity Engineering",
+  "entrypoint": "SKILL.md"
+}

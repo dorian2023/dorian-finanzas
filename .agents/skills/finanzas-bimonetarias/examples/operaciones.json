@@ -1,0 +1,38 @@
+[
+  {
+    "description": "Gasto en repuestos de moto pagado en Bolívares con Pago Móvil",
+    "type": "expense",
+    "amount_minor": 125000,
+    "currency": "VES",
+    "rate_used": 45.5,
+    "equivalent_usd_minor": 2747,
+    "category": "Moto",
+    "account": "Pago Móvil",
+    "merchant": "Repuestos Moto El Tigre",
+    "occurred_at": "2026-10-20T14:30:00Z"
+  },
+  {
+    "description": "Ingreso por trabajo en Muebles Bellagio en efectivo USD",
+    "type": "income",
+    "amount_minor": 15000,
+    "currency": "USD",
+    "rate_used": 45.5,
+    "equivalent_ves_minor": 682500,
+    "category": "Salario",
+    "source": "Muebles Bellagio",
+    "account": "Efectivo USD",
+    "occurred_at": "2026-10-20T18:00:00Z"
+  },
+  {
+    "description": "Cambio de divisa: Venta de $20 en efectivo para recibir Bolívares en Banco de Venezuela",
+    "type": "exchange",
+    "from_account": "Efectivo USD",
+    "from_amount_minor": 2000,
+    "from_currency": "USD",
+    "to_account": "Banco de Venezuela",
+    "to_amount_minor": 91000,
+    "to_currency": "VES",
+    "rate_used": 45.5,
+    "occurred_at": "2026-10-20T19:00:00Z"
+  }
+]
