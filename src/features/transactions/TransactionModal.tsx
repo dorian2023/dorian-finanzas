@@ -6,7 +6,8 @@ import {
   TrendingDown,
   TrendingUp,
   ArrowRightLeft,
-  Sparkles
+  Sparkles,
+  ImageIcon
 } from 'lucide-react';
 import type { Account, Category, IncomeSource, Transaction, TransactionType } from './types';
 import { formatMoney, toMinor, type Currency } from '../../shared/lib/money';
@@ -44,7 +45,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [note, setNote] = useState('');
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
     setAmountInput('');
@@ -52,6 +54,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setNote('');
     setReceiptPreview(null);
     setIsScanning(false);
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
 
   React.useEffect(() => {
@@ -220,40 +224,90 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           </button>
         </div>
 
-        {/* Captura de Foto de Factura (botón protagonista para gastos) */}
+        {/* Captura de Foto de Factura (Cámara directa o Galería) */}
         {type === 'expense' && (
           <div style={{ marginBottom: 18 }}>
+            {/* Input para Cámara directa */}
             <input
               type="file"
-              ref={fileInputRef}
+              ref={cameraInputRef}
               accept="image/*"
               capture="environment"
               style={{ display: 'none' }}
               onChange={handleFileChange}
             />
 
+            {/* Input para Galería / Fotos guardadas */}
+            <input
+              type="file"
+              ref={galleryInputRef}
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+            />
+
             {!receiptPreview ? (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.12) 100%)',
-                  border: '1px dashed rgba(16, 185, 129, 0.4)',
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                <Camera size={20} color="#10b981" />
-                <span>Tomar Foto de la Factura o Ticket</span>
-              </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {/* Botón Tomar Foto */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (cameraInputRef.current) {
+                      cameraInputRef.current.value = '';
+                      cameraInputRef.current.click();
+                    }
+                  }}
+                  style={{
+                    padding: '12px 10px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.12) 100%)',
+                    border: '1px dashed rgba(16, 185, 129, 0.45)',
+                    color: 'var(--text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Abrir cámara del teléfono"
+                >
+                  <Camera size={18} color="#10b981" />
+                  <span>Tomar Foto</span>
+                </button>
+
+                {/* Botón Elegir de Galería */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (galleryInputRef.current) {
+                      galleryInputRef.current.value = '';
+                      galleryInputRef.current.click();
+                    }
+                  }}
+                  style={{
+                    padding: '12px 10px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%)',
+                    border: '1px dashed rgba(59, 130, 246, 0.45)',
+                    color: 'var(--text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Seleccionar foto de factura desde la galería"
+                >
+                  <ImageIcon size={18} color="#3b82f6" />
+                  <span>De Galería</span>
+                </button>
+              </div>
             ) : (
               <div style={{
                 position: 'relative',
@@ -293,17 +347,38 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   }}>
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="badge badge-usd"
-                      style={{ cursor: 'pointer', background: 'rgba(0,0,0,0.8)' }}
+                      onClick={() => {
+                        if (cameraInputRef.current) {
+                          cameraInputRef.current.value = '';
+                          cameraInputRef.current.click();
+                        }
+                      }}
+                      className="badge"
+                      style={{ cursor: 'pointer', background: 'rgba(0,0,0,0.82)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+                      title="Tomar nueva foto con cámara"
                     >
-                      <Camera size={12} /> Cambiar
+                      <Camera size={12} /> Cámara
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (galleryInputRef.current) {
+                          galleryInputRef.current.value = '';
+                          galleryInputRef.current.click();
+                        }
+                      }}
+                      className="badge"
+                      style={{ cursor: 'pointer', background: 'rgba(0,0,0,0.82)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+                      title="Elegir otra imagen de la galería"
+                    >
+                      <ImageIcon size={12} /> Galería
                     </button>
                     <button
                       type="button"
                       onClick={() => setReceiptPreview(null)}
                       className="badge badge-danger"
-                      style={{ cursor: 'pointer', background: 'rgba(0,0,0,0.8)' }}
+                      style={{ cursor: 'pointer', background: 'rgba(239, 68, 68, 0.85)', color: '#fff', border: '1px solid rgba(239, 68, 68, 0.5)' }}
+                      title="Eliminar imagen"
                     >
                       <X size={12} /> Quitar
                     </button>
