@@ -140,97 +140,185 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div style={{ padding: '16px 16px 90px' }}>
-      {/* Header superior */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      {/* Header superior: Fila 1 (Perfil y Acciones de Cabecera) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Hola,</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>Dorian 👋</span>
+            <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: -0.3 }}>Dorian 👋</span>
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)', fontSize: 10, padding: '2px 8px' }}>
               <Shield size={10} /> Policía
             </span>
-            <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+            <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)', fontSize: 10, padding: '2px 8px' }}>
               <Briefcase size={10} /> Bellagio
             </span>
           </div>
         </div>
 
-        {/* Selector Dual de Tasas (Binance vs BCV) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {/* Botón Tasa Binance */}
-          <button
-            onClick={() => onSwitchRateSource('binance')}
-            style={{
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-md)',
-              background: activeRateSource === 'binance' ? 'rgba(245, 158, 11, 0.22)' : 'rgba(255, 255, 255, 0.04)',
-              border: activeRateSource === 'binance' ? '1.5px solid #f59e0b' : '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: 1,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: 9, fontWeight: 800, color: '#fbbf24', letterSpacing: 0.5 }}>🟡 BINANCE</span>
-              {activeRateSource === 'binance' && (
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fbbf24' }} />
-              )}
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#fbbf24' }}>
-              Bs. {binanceRate.toFixed(2)}
-            </span>
-          </button>
-
-          {/* Botón Tasa BCV */}
-          <button
-            onClick={() => onSwitchRateSource('bcv')}
-            style={{
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-md)',
-              background: activeRateSource === 'bcv' ? 'rgba(59, 130, 246, 0.22)' : 'rgba(255, 255, 255, 0.04)',
-              border: activeRateSource === 'bcv' ? '1.5px solid #3b82f6' : '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: 1,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: 9, fontWeight: 800, color: '#60a5fa', letterSpacing: 0.5 }}>🏛️ BCV</span>
-              {activeRateSource === 'bcv' && (
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#60a5fa' }} />
-              )}
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#60a5fa' }}>
-              Bs. {bcvRate.toFixed(2)}
-            </span>
-          </button>
-
-          {/* Botón Selector de Tema (Dark / Light) */}
+        {/* Controles: Selector de Tema (Dark / Light) y Engranaje de Configuración */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={onToggleTheme}
             className="btn-icon"
-            style={{ width: 36, height: 36, padding: 0 }}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 'var(--radius-full)',
+              background: theme === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.05)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             title={theme === 'dark' ? 'Cambiar a modo claro (Día)' : 'Cambiar a modo oscuro (Noche)'}
+            aria-label="Cambiar tema claro u oscuro"
           >
-            {theme === 'dark' ? <Sun size={17} color="#fbbf24" /> : <Moon size={17} color="#6366f1" />}
+            {theme === 'dark' ? (
+              <Sun size={18} color="#fbbf24" style={{ filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.4))' }} />
+            ) : (
+              <Moon size={18} color="#6366f1" style={{ filter: 'drop-shadow(0 0 4px rgba(99, 102, 241, 0.3))' }} />
+            )}
           </button>
 
-          {/* Botón Configurar / Actualizar */}
           <button
             onClick={onOpenRateModal}
             className="btn-icon"
-            style={{ width: 36, height: 36, padding: 0 }}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 'var(--radius-full)',
+              background: theme === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.05)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             title="Configurar y sincronizar tasas"
+            aria-label="Configuración de tasas"
           >
-            <Settings size={16} />
+            <Settings size={18} color="var(--text-secondary)" />
           </button>
         </div>
+      </div>
+
+      {/* Header superior: Fila 2 (Selector Dual de Tasas Binance vs BCV) */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 10,
+          marginBottom: 16,
+        }}
+      >
+        {/* Botón Tasa Binance */}
+        <button
+          onClick={() => onSwitchRateSource('binance')}
+          style={{
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-lg)',
+            background: activeRateSource === 'binance'
+              ? (theme === 'dark' ? 'rgba(245, 158, 11, 0.18)' : 'rgba(245, 158, 11, 0.12)')
+              : 'var(--badge-bg-neutral)',
+            border: activeRateSource === 'binance' ? '1.5px solid #f59e0b' : '1px solid var(--border-subtle)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            gap: 2,
+            boxShadow: activeRateSource === 'binance' ? '0 0 12px rgba(245, 158, 11, 0.2)' : 'none',
+            transition: 'all 0.18s ease',
+            cursor: 'pointer',
+            width: '100%',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#f59e0b', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+              🟡 BINANCE
+            </span>
+            {activeRateSource === 'binance' && (
+              <span
+                style={{
+                  fontSize: 8,
+                  fontWeight: 800,
+                  padding: '1px 5px',
+                  borderRadius: 10,
+                  background: '#f59e0b',
+                  color: '#000000',
+                  textTransform: 'uppercase',
+                }}
+              >
+                ACTIVA
+              </span>
+            )}
+          </div>
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 800,
+              fontFamily: 'var(--font-mono)',
+              color: activeRateSource === 'binance' ? '#f59e0b' : 'var(--text-primary)',
+            }}
+          >
+            Bs. {binanceRate.toFixed(2)}
+          </span>
+        </button>
+
+        {/* Botón Tasa BCV */}
+        <button
+          onClick={() => onSwitchRateSource('bcv')}
+          style={{
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-lg)',
+            background: activeRateSource === 'bcv'
+              ? (theme === 'dark' ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.12)')
+              : 'var(--badge-bg-neutral)',
+            border: activeRateSource === 'bcv' ? '1.5px solid #3b82f6' : '1px solid var(--border-subtle)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            gap: 2,
+            boxShadow: activeRateSource === 'bcv' ? '0 0 12px rgba(59, 130, 246, 0.2)' : 'none',
+            transition: 'all 0.18s ease',
+            cursor: 'pointer',
+            width: '100%',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#3b82f6', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+              🏛️ BCV
+            </span>
+            {activeRateSource === 'bcv' && (
+              <span
+                style={{
+                  fontSize: 8,
+                  fontWeight: 800,
+                  padding: '1px 5px',
+                  borderRadius: 10,
+                  background: '#3b82f6',
+                  color: '#ffffff',
+                  textTransform: 'uppercase',
+                }}
+              >
+                ACTIVA
+              </span>
+            )}
+          </div>
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 800,
+              fontFamily: 'var(--font-mono)',
+              color: activeRateSource === 'bcv' ? '#3b82f6' : 'var(--text-primary)',
+            }}
+          >
+            Bs. {bcvRate.toFixed(2)}
+          </span>
+        </button>
       </div>
 
       {/* Hero Card Bimonetaria */}
