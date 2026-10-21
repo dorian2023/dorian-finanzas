@@ -116,8 +116,14 @@ export const BellagioService = {
     let pendingCommissionUSD = 0;
     let paidCommissionUSD = 0;
     let pendingCount = 0;
+    let cancelledCount = 0;
 
     for (const o of filtered) {
+      if (o.status === 'cancelled') {
+        cancelledCount++;
+        continue; // Los pedidos anulados NO suman a las comisiones activas
+      }
+
       // Si la venta está en VES, aproximamos a USD con tasa fija estándar para estadísticas consolidadas
       const saleUSD = o.currency === 'USD' ? o.totalSaleMinor : Math.round(o.totalSaleMinor / 880);
       const commUSD = o.currency === 'USD' ? o.commissionMinor : Math.round(o.commissionMinor / 880);
@@ -128,7 +134,7 @@ export const BellagioService = {
       if (o.status === 'pending') {
         pendingCommissionUSD += commUSD;
         pendingCount++;
-      } else {
+      } else if (o.status === 'paid') {
         paidCommissionUSD += commUSD;
       }
     }
@@ -147,7 +153,31 @@ export const BellagioService = {
       paidCommissionUSD,
       totalOrdersCount: filtered.length,
       pendingOrdersCount: pendingCount,
+      cancelledOrdersCount: cancelledCount,
     };
+  },
+
+  /**
+   * Cambia el estado de un pedido a Anulado o lo reactiva a Pendiente
+   */
+  toggleCancelOrder(orderId: string): BellagioOrder | null {
+    const orders = this.getOrders();
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return null;
+
+    if (order.status === 'cancelled') {
+      order.status = 'pending';
+    } else {
+      order.status = 'cancelled';
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+    } catch (err) {
+      console.error('Error actualizando estado anulado del pedido:', err);
+    }
+
+    return order;
   },
 
   /**
@@ -155,24 +185,33 @@ export const BellagioService = {
    */
   generateWhatsAppReport(orders: BellagioOrder[], summary: BellagioCutoffSummary): string {
     const filtered = orders.filter((o) => o.orderDate.startsWith(summary.periodKey));
+    const activeOrders = filtered.filter((o) => o.status !== 'cancelled');
+    const cancelledOrders = filtered.filter((o) => o.status === 'cancelled');
 
     let text = `🛋️ *Muebles Bellagio - Reporte de Comisiones de Ventas*\n`;
     text += `📅 *Corte:* ${summary.periodLabel}\n`;
     text += `👤 *Asesor:* Dorian\n\n`;
 
     text += `📊 *Resumen de Comisiones:*\n`;
-    text += `• Total Ventas Facturadas: ${formatMoney(summary.totalSalesUSD, 'USD')}\n`;
+    text += `• Total Ventas Válidas: ${formatMoney(summary.totalSalesUSD, 'USD')}\n`;
     text += `• Total Comisión Ganada (4%): ${formatMoney(summary.totalCommissionUSD, 'USD')}\n`;
     text += `• Comisiones Ya Liquidadas: ${formatMoney(summary.paidCommissionUSD, 'USD')}\n`;
-    text += `💰 *Saldo Pendiente por Pagar: ${formatMoney(summary.pendingCommissionUSD, 'USD')}*\n\n`;
+    text += `💰 *Saldo Pendiente por Liquidar: ${formatMoney(summary.pendingCommissionUSD, 'USD')}*\n\n`;
 
-    text += `📋 *Detalle de Pedidos (${filtered.length}):*\n`;
-    filtered.forEach((o, index) => {
+    text += `📋 *Detalle de Pedidos Activos (${activeOrders.length}):*\n`;
+    activeOrders.forEach((o, index) => {
       const statusIcon = o.status === 'paid' ? '✅' : '⏳';
       const statusLabel = o.status === 'paid' ? 'Cobrado' : 'Pendiente';
       text += `${index + 1}. ${statusIcon} *${o.customerName}* (${o.itemsDescription})\n`;
       text += `   Venta: ${formatMoney(o.totalSaleMinor, o.currency)} | Comisión (4%): *${formatMoney(o.commissionMinor, o.currency)}* [${statusLabel}]\n`;
     });
+
+    if (cancelledOrders.length > 0) {
+      text += `\n🚫 *Pedidos Anulados (${cancelledOrders.length}):*\n`;
+      cancelledOrders.forEach((o, index) => {
+        text += `${index + 1}. ❌ *${o.customerName}* (${o.itemsDescription}) - Venta: ${formatMoney(o.totalSaleMinor, o.currency)} [ANULADO]\n`;
+      });
+    }
 
     return text;
   },

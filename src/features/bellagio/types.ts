@@ -1,6 +1,6 @@
 import type { Currency } from '../../shared/lib/money';
 
-export type BellagioOrderStatus = 'pending' | 'paid';
+export type BellagioOrderStatus = 'pending' | 'paid' | 'cancelled';
 
 export interface BellagioOrder {
   id: string;
@@ -21,10 +21,11 @@ export interface BellagioOrder {
 export interface BellagioCutoffSummary {
   periodKey: string; // YYYY-MM
   periodLabel: string; // Ej: "Octubre 2026"
-  totalSalesUSD: number; // En céntimos
+  totalSalesUSD: number; // En céntimos (solo pedidos válidos, sin contar anulados)
   totalCommissionUSD: number; // En céntimos
   pendingCommissionUSD: number; // En céntimos
   paidCommissionUSD: number; // En céntimos
   totalOrdersCount: number;
   pendingOrdersCount: number;
+  cancelledOrdersCount: number;
 }

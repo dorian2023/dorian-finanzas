@@ -8,7 +8,10 @@ import {
   Trash2,
   DollarSign,
   ShoppingBag,
-  AlertCircle
+  AlertCircle,
+  Edit2,
+  Ban,
+  RotateCcw
 } from 'lucide-react';
 import type { BellagioOrder } from './types';
 import { BellagioService } from './bellagioService';
@@ -36,8 +39,9 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'paid'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'paid' | 'cancelled'>('all');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [copiedReport, setCopiedReport] = useState(false);
 
   // Formulario nuevo pedido
@@ -80,11 +84,34 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
       .filter((o) => {
         if (filterStatus === 'pending') return o.status === 'pending';
         if (filterStatus === 'paid') return o.status === 'paid';
+        if (filterStatus === 'cancelled') return o.status === 'cancelled';
         return true;
       });
   }, [orders, selectedPeriod, filterStatus]);
 
   if (!isOpen) return null;
+
+  const handleStartEdit = (order: BellagioOrder) => {
+    setEditingOrderId(order.id);
+    setCustomerName(order.customerName);
+    setItemsDescription(order.itemsDescription);
+    setSaleAmountInput((order.totalSaleMinor / 100).toFixed(2));
+    setCurrency(order.currency);
+    setOrderDate(order.orderDate);
+    setNotes(order.notes || '');
+    setFormError(null);
+    setShowAddForm(true);
+  };
+
+  const handleCancelForm = () => {
+    setEditingOrderId(null);
+    setCustomerName('');
+    setItemsDescription('');
+    setSaleAmountInput('');
+    setNotes('');
+    setFormError(null);
+    setShowAddForm(false);
+  };
 
   const handleCreateOrder = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,24 +130,45 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
       return;
     }
 
-    BellagioService.saveOrder({
-      customerName: customerName.trim(),
-      itemsDescription: itemsDescription.trim(),
-      totalSaleMinor: numericSaleMinor,
-      currency,
-      commissionRate: 0.04,
-      orderDate,
-      status: 'pending',
-      notes: notes.trim() || undefined,
-    });
+    if (editingOrderId) {
+      const existing = orders.find((o) => o.id === editingOrderId);
+      BellagioService.saveOrder({
+        id: editingOrderId,
+        customerName: customerName.trim(),
+        itemsDescription: itemsDescription.trim(),
+        totalSaleMinor: numericSaleMinor,
+        currency,
+        commissionRate: 0.04,
+        orderDate,
+        status: existing?.status || 'pending',
+        notes: notes.trim() || undefined,
+      });
+    } else {
+      BellagioService.saveOrder({
+        customerName: customerName.trim(),
+        itemsDescription: itemsDescription.trim(),
+        totalSaleMinor: numericSaleMinor,
+        currency,
+        commissionRate: 0.04,
+        orderDate,
+        status: 'pending',
+        notes: notes.trim() || undefined,
+      });
+    }
 
-    // Resetear formulario
-    setCustomerName('');
-    setItemsDescription('');
-    setSaleAmountInput('');
-    setNotes('');
-    setShowAddForm(false);
+    handleCancelForm();
     refreshOrders();
+  };
+
+  const handleToggleCancel = (order: BellagioOrder) => {
+    const isCancelled = order.status === 'cancelled';
+    const msg = isCancelled
+      ? `¿Deseas reactivar el pedido de ${order.customerName} a estado Pendiente?`
+      : `¿Deseas anular el pedido de ${order.customerName}? (No se sumará a las comisiones por cobrar)`;
+    if (window.confirm(msg)) {
+      BellagioService.toggleCancelOrder(order.id);
+      refreshOrders();
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -297,7 +345,13 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
             <button
               type="button"
-              onClick={() => setShowAddForm(!showAddForm)}
+              onClick={() => {
+                if (showAddForm) {
+                  handleCancelForm();
+                } else {
+                  setShowAddForm(true);
+                }
+              }}
               className="btn-primary"
               style={{
                 padding: '10px 12px',
@@ -351,9 +405,20 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                 background: 'var(--bg-card)',
               }}
             >
-              <h3 style={{ fontSize: 13, fontWeight: 800, color: '#c084fc', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Registrar Venta Bajo Pedido
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 800, color: '#c084fc', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {editingOrderId ? '✏️ Editar Pedido de Bellagio' : 'Registrar Venta Bajo Pedido'}
+                </h3>
+                {editingOrderId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelForm}
+                    style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    Cancelar edición
+                  </button>
+                )}
+              </div>
 
               {formError && (
                 <div
@@ -513,22 +578,41 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '11px',
-                  borderRadius: 'var(--radius-full)',
-                  background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
-                }}
-              >
-                <Check size={16} /> Guardar Pedido en Bellagio
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {editingOrderId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelForm}
+                    style={{
+                      flex: 1,
+                      padding: '11px',
+                      borderRadius: 'var(--radius-full)',
+                      background: 'var(--badge-bg-neutral)',
+                      color: 'var(--text-secondary)',
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  style={{
+                    flex: 2,
+                    padding: '11px',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
+                  }}
+                >
+                  <Check size={16} /> {editingOrderId ? 'Actualizar Pedido' : 'Guardar Pedido en Bellagio'}
+                </button>
+              </div>
             </form>
           )}
 
-          {/* Filtro de Estado: Todos / Pendientes / Cobrados */}
+          {/* Filtro de Estado: Todos / Pendientes / Cobrados / Anulados */}
           <div
             style={{
               display: 'flex',
@@ -536,6 +620,7 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
               padding: 3,
               borderRadius: 'var(--radius-full)',
               marginBottom: 12,
+              gap: 2,
             }}
           >
             <button
@@ -543,9 +628,9 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
               onClick={() => setFilterStatus('all')}
               style={{
                 flex: 1,
-                padding: '6px 10px',
+                padding: '6px 6px',
                 borderRadius: 'var(--radius-full)',
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 700,
                 color: filterStatus === 'all' ? '#c084fc' : 'var(--text-secondary)',
                 background: filterStatus === 'all' ? 'rgba(168, 85, 247, 0.2)' : 'none',
@@ -558,9 +643,9 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
               onClick={() => setFilterStatus('pending')}
               style={{
                 flex: 1,
-                padding: '6px 10px',
+                padding: '6px 6px',
                 borderRadius: 'var(--radius-full)',
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 700,
                 color: filterStatus === 'pending' ? '#f59e0b' : 'var(--text-secondary)',
                 background: filterStatus === 'pending' ? 'rgba(245, 158, 11, 0.2)' : 'none',
@@ -573,15 +658,30 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
               onClick={() => setFilterStatus('paid')}
               style={{
                 flex: 1,
-                padding: '6px 10px',
+                padding: '6px 6px',
                 borderRadius: 'var(--radius-full)',
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 700,
                 color: filterStatus === 'paid' ? '#10b981' : 'var(--text-secondary)',
                 background: filterStatus === 'paid' ? 'rgba(16, 185, 129, 0.2)' : 'none',
               }}
             >
               Cobrados ({orders.filter((o) => o.orderDate.startsWith(selectedPeriod) && o.status === 'paid').length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterStatus('cancelled')}
+              style={{
+                flex: 1,
+                padding: '6px 6px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: 10,
+                fontWeight: 700,
+                color: filterStatus === 'cancelled' ? '#ef4444' : 'var(--text-secondary)',
+                background: filterStatus === 'cancelled' ? 'rgba(239, 68, 68, 0.2)' : 'none',
+              }}
+            >
+              Anulados ({orders.filter((o) => o.orderDate.startsWith(selectedPeriod) && o.status === 'cancelled').length})
             </button>
           </div>
 
@@ -604,6 +704,7 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
             ) : (
               filteredOrders.map((order) => {
                 const isPending = order.status === 'pending';
+                const isCancelled = order.status === 'cancelled';
 
                 return (
                   <div
@@ -612,8 +713,13 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                     style={{
                       borderRadius: 16,
                       padding: 12,
-                      border: isPending ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid var(--border-subtle)',
+                      border: isCancelled
+                        ? '1px solid rgba(239, 68, 68, 0.3)'
+                        : isPending
+                        ? '1px solid rgba(245, 158, 11, 0.35)'
+                        : '1px solid var(--border-subtle)',
                       background: 'var(--bg-card)',
+                      opacity: isCancelled ? 0.75 : 1,
                       display: 'flex',
                       flexDirection: 'column',
                       gap: 8,
@@ -623,7 +729,14 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>
+                          <span
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 800,
+                              color: isCancelled ? 'var(--text-secondary)' : 'var(--text-primary)',
+                              textDecoration: isCancelled ? 'line-through' : 'none',
+                            }}
+                          >
                             {order.customerName}
                           </span>
                           <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
@@ -643,12 +756,20 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                           padding: '3px 8px',
                           borderRadius: 10,
                           textTransform: 'uppercase',
-                          background: isPending ? 'rgba(245, 158, 11, 0.18)' : 'rgba(16, 185, 129, 0.18)',
-                          color: isPending ? '#fbbf24' : '#34d399',
-                          border: isPending ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(16, 185, 129, 0.35)',
+                          background: isCancelled
+                            ? 'rgba(239, 68, 68, 0.18)'
+                            : isPending
+                            ? 'rgba(245, 158, 11, 0.18)'
+                            : 'rgba(16, 185, 129, 0.18)',
+                          color: isCancelled ? '#f87171' : isPending ? '#fbbf24' : '#34d399',
+                          border: isCancelled
+                            ? '1px solid rgba(239, 68, 68, 0.35)'
+                            : isPending
+                            ? '1px solid rgba(245, 158, 11, 0.35)'
+                            : '1px solid rgba(16, 185, 129, 0.35)',
                         }}
                       >
-                        {isPending ? 'Pendiente' : 'Cobrado'}
+                        {isCancelled ? 'Anulado' : isPending ? 'Pendiente' : 'Cobrado'}
                       </span>
                     </div>
 
@@ -667,22 +788,38 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                         <span style={{ fontSize: 10, color: 'var(--text-tertiary)', display: 'block' }}>
                           Venta Total
                         </span>
-                        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            fontFamily: 'var(--font-mono)',
+                            color: 'var(--text-primary)',
+                            textDecoration: isCancelled ? 'line-through' : 'none',
+                          }}
+                        >
                           {formatMoney(order.totalSaleMinor, order.currency)}
                         </span>
                       </div>
 
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: 10, color: '#c084fc', fontWeight: 700, display: 'block' }}>
-                          Comisión 4%
+                        <span style={{ fontSize: 10, color: isCancelled ? 'var(--text-tertiary)' : '#c084fc', fontWeight: 700, display: 'block' }}>
+                          Comisión 4% {isCancelled ? '(Anulada)' : ''}
                         </span>
-                        <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-mono)', color: isPending ? '#fbbf24' : '#34d399' }}>
+                        <span
+                          style={{
+                            fontSize: 15,
+                            fontWeight: 800,
+                            fontFamily: 'var(--font-mono)',
+                            color: isCancelled ? 'var(--text-tertiary)' : isPending ? '#fbbf24' : '#34d399',
+                            textDecoration: isCancelled ? 'line-through' : 'none',
+                          }}
+                        >
                           +{formatMoney(order.commissionMinor, order.currency)}
                         </span>
                       </div>
                     </div>
 
-                    {/* Fila 3: Acciones (Cobrar o Eliminar) */}
+                    {/* Fila 3: Acciones (Editar, Cobrar, Anular/Reactivar o Eliminar) */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 2 }}>
                       {order.notes ? (
                         <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
@@ -693,6 +830,34 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                       )}
 
                       <div style={{ display: 'flex', gap: 6 }}>
+                        {/* Botón Editar Venta */}
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(order)}
+                          className="btn-icon"
+                          style={{ width: 30, height: 30, padding: 0, color: '#38bdf8' }}
+                          title="Editar detalles y montos de esta venta"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+
+                        {/* Botón Anular / Reactivar */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCancel(order)}
+                          className="btn-icon"
+                          style={{
+                            width: 30,
+                            height: 30,
+                            padding: 0,
+                            color: isCancelled ? '#34d399' : '#f59e0b',
+                          }}
+                          title={isCancelled ? 'Reactivar pedido anulado' : 'Anular este pedido'}
+                        >
+                          {isCancelled ? <RotateCcw size={13} /> : <Ban size={13} />}
+                        </button>
+
+                        {/* Botón Cobrar Comisión al Jefe */}
                         {isPending && (
                           <button
                             type="button"
@@ -711,16 +876,17 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                               boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
                             }}
                           >
-                            <DollarSign size={13} /> Cobrar al Jefe
+                            <DollarSign size={13} /> Cobrar
                           </button>
                         )}
 
+                        {/* Botón Eliminar */}
                         <button
                           type="button"
                           onClick={() => handleDelete(order.id)}
                           className="btn-icon"
                           style={{ width: 30, height: 30, padding: 0, color: '#f43f5e' }}
-                          title="Eliminar pedido"
+                          title="Eliminar pedido definitivamente"
                         >
                           <Trash2 size={13} />
                         </button>
