@@ -119,10 +119,13 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     <div
       className="glass-panel"
       style={{
-        borderRadius: 20,
-        padding: '14px 12px',
+        borderRadius: 18,
+        padding: '12px 8px',
         marginBottom: 16,
         border: '1px solid var(--border-subtle)',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
       {/* Controles de Navegación del Mes */}
@@ -131,23 +134,34 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: 14,
+          marginBottom: 12,
+          gap: 6,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CalendarIcon size={18} color="var(--color-usd)" />
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <CalendarIcon size={16} color="var(--color-usd)" style={{ flexShrink: 0 }} />
+          <h2
+            style={{
+              fontSize: 15,
+              fontWeight: 800,
+              color: 'var(--text-primary)',
+              textTransform: 'capitalize',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
             {MONTH_NAMES[currentMonth]} <span style={{ opacity: 0.6 }}>{currentYear}</span>
           </h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
           <button
             type="button"
             onClick={onGoToToday}
             style={{
-              padding: '4px 10px',
-              fontSize: 11,
+              padding: '3px 8px',
+              fontSize: 10,
               fontWeight: 700,
               borderRadius: 'var(--radius-full)',
               background: 'var(--badge-bg-neutral)',
@@ -162,22 +176,22 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             type="button"
             onClick={onPrevMonth}
             className="btn-icon"
-            style={{ width: 34, height: 34 }}
+            style={{ width: 32, height: 32, padding: 0 }}
             title="Mes anterior"
             aria-label="Mes anterior"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
 
           <button
             type="button"
             onClick={onNextMonth}
             className="btn-icon"
-            style={{ width: 34, height: 34 }}
+            style={{ width: 32, height: 32, padding: 0 }}
             title="Mes siguiente"
             aria-label="Mes siguiente"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
@@ -188,19 +202,20 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           display: 'grid',
           gridTemplateColumns: 'repeat(7, 1fr)',
           textAlign: 'center',
-          marginBottom: 8,
+          marginBottom: 6,
+          gap: 2,
         }}
       >
         {WEEKDAY_NAMES.map((name) => (
           <span
             key={name}
             style={{
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 700,
               color: 'var(--text-tertiary)',
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
-              padding: '4px 0',
+              letterSpacing: 0.3,
+              padding: '2px 0',
             }}
           >
             {name}
@@ -208,12 +223,13 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
         ))}
       </div>
 
-      {/* Matriz de Días */}
+      {/* Matriz de Días (100% responsiva y fluida) */}
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: 4,
+          gap: 2,
+          width: '100%',
         }}
       >
         {cells.map((cell) => {
@@ -225,13 +241,14 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               onClick={() => onSelectDate(cell.dateStr)}
               style={{
                 aspectRatio: '1 / 1',
-                minHeight: 44,
-                borderRadius: 12,
+                width: '100%',
+                minWidth: 0,
+                borderRadius: 8,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '2px 0',
+                padding: 0,
                 position: 'relative',
                 background: cell.isSelected
                   ? 'var(--color-usd)'
@@ -245,24 +262,24 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                   : 'var(--text-tertiary)',
                 fontWeight: cell.isSelected || cell.isToday ? 800 : 500,
                 border: cell.isSelected
-                  ? '2px solid rgba(255, 255, 255, 0.35)'
+                  ? '1.5px solid rgba(255, 255, 255, 0.4)'
                   : cell.isToday
                   ? '1.5px solid var(--color-usd)'
                   : '1px solid transparent',
                 boxShadow: cell.isSelected
-                  ? '0 4px 12px rgba(16, 185, 129, 0.4)'
+                  ? '0 2px 8px rgba(16, 185, 129, 0.4)'
                   : 'none',
-                opacity: cell.isCurrentMonth ? 1 : 0.35,
-                transition: 'all 0.15s ease',
+                opacity: cell.isCurrentMonth ? 1 : 0.3,
+                transition: 'all 0.12s ease',
               }}
             >
               {/* Número del día */}
               <span
                 style={{
-                  fontSize: 13,
+                  fontSize: 12,
                   fontFamily: 'var(--font-mono)',
                   lineHeight: 1,
-                  marginBottom: 3,
+                  marginBottom: 2,
                 }}
               >
                 {cell.dayNum}

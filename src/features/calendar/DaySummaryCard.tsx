@@ -77,29 +77,33 @@ export const DaySummaryCard: React.FC<DaySummaryCardProps> = ({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 8,
+          gap: 6,
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         {/* Total Ingresado */}
         <div
           style={{
-            padding: '10px 8px',
+            padding: '9px 6px',
             borderRadius: 'var(--radius-md)',
             background: 'var(--act-income-bg)',
             border: '1px solid var(--act-income-border)',
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
+            minWidth: 0,
+            overflow: 'hidden',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--act-income-text)' }}>
-            <TrendingUp size={12} />
-            <span style={{ fontSize: 10, fontWeight: 800 }}>Ingresos</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--act-income-text)' }}>
+            <TrendingUp size={11} />
+            <span style={{ fontSize: 9, fontWeight: 800 }}>Ingresos</span>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--act-income-text)' }}>
+          <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--act-income-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             +{formatMoney(activity.totalIncomeEquivUSD, 'USD')}
           </span>
-          <span style={{ fontSize: 9, opacity: 0.8, color: 'var(--act-income-text)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 9, opacity: 0.8, color: 'var(--act-income-text)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             Bs. {formatMoney(incomeVES, 'VES').replace('Bs. ', '')}
           </span>
         </div>
@@ -107,23 +111,25 @@ export const DaySummaryCard: React.FC<DaySummaryCardProps> = ({
         {/* Total Gastado */}
         <div
           style={{
-            padding: '10px 8px',
+            padding: '9px 6px',
             borderRadius: 'var(--radius-md)',
             background: 'var(--act-expense-bg)',
             border: '1px solid var(--act-expense-border)',
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
+            minWidth: 0,
+            overflow: 'hidden',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--act-expense-text)' }}>
-            <TrendingDown size={12} />
-            <span style={{ fontSize: 10, fontWeight: 800 }}>Gastos</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--act-expense-text)' }}>
+            <TrendingDown size={11} />
+            <span style={{ fontSize: 9, fontWeight: 800 }}>Gastos</span>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--act-expense-text)' }}>
+          <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--act-expense-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             -{formatMoney(activity.totalExpenseEquivUSD, 'USD')}
           </span>
-          <span style={{ fontSize: 9, opacity: 0.8, color: 'var(--act-expense-text)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 9, opacity: 0.8, color: 'var(--act-expense-text)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             Bs. {formatMoney(expenseVES, 'VES').replace('Bs. ', '')}
           </span>
         </div>
@@ -131,7 +137,7 @@ export const DaySummaryCard: React.FC<DaySummaryCardProps> = ({
         {/* Balance Neto */}
         <div
           style={{
-            padding: '10px 8px',
+            padding: '9px 6px',
             borderRadius: 'var(--radius-md)',
             background: isNetPositive
               ? 'rgba(16, 185, 129, 0.12)'
@@ -146,24 +152,29 @@ export const DaySummaryCard: React.FC<DaySummaryCardProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
+            minWidth: 0,
+            overflow: 'hidden',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: isNetPositive ? '#10b981' : isNetNegative ? '#f43f5e' : 'var(--text-tertiary)' }}>
-            <Scale size={12} />
-            <span style={{ fontSize: 10, fontWeight: 800 }}>Neto</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: isNetPositive ? '#10b981' : isNetNegative ? '#f43f5e' : 'var(--text-tertiary)' }}>
+            <Scale size={11} />
+            <span style={{ fontSize: 9, fontWeight: 800 }}>Neto</span>
           </div>
           <span
             style={{
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 800,
               fontFamily: 'var(--font-mono)',
               color: isNetPositive ? '#10b981' : isNetNegative ? '#f43f5e' : 'var(--text-primary)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             {isNetPositive ? '+' : ''}
             {formatMoney(activity.netBalanceEquivUSD, 'USD')}
           </span>
-          <span style={{ fontSize: 9, opacity: 0.8, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 9, opacity: 0.8, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             Bs. {formatMoney(netVES, 'VES').replace('Bs. ', '')}
           </span>
         </div>

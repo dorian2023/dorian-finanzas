@@ -77,7 +77,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   };
 
   return (
-    <div style={{ padding: '16px 16px 90px' }}>
+    <div style={{ padding: '14px 12px 90px', width: '100%', maxWidth: '100vw', boxSizing: 'border-box', overflowX: 'hidden' }}>
       {/* Barra superior de navegación del Calendario */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <button
