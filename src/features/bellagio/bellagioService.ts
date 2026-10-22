@@ -1,6 +1,7 @@
 import type { BellagioOrder, BellagioCutoffSummary } from './types';
 import { DatabaseService } from '../../shared/lib/dbService';
 import { formatMoney } from '../../shared/lib/money';
+import { supabase } from '../../shared/lib/supabaseClient';
 import type { Transaction } from '../transactions/types';
 
 const STORAGE_KEY = 'dorian_bellagio_orders';
@@ -16,6 +17,60 @@ export const BellagioService = {
       console.error('Error cargando pedidos de Bellagio:', err);
       return [];
     }
+  },
+
+  /**
+   * Sincroniza los pedidos locales con la nube de Supabase
+   */
+  async syncToCloud(orders?: BellagioOrder[]): Promise<void> {
+    try {
+      const payload = orders || this.getOrders();
+      await supabase.from('tasks').upsert({
+        id: 'sys-bellagio-orders',
+        title: '__BELLAGIO_ORDERS_CLOUD__',
+        description: JSON.stringify(payload),
+        due_date: '2099-12-31',
+        priority: 'low',
+        is_completed: true,
+      });
+    } catch (err) {
+      console.warn('Error sincronizando Bellagio con la nube:', err);
+    }
+  },
+
+  /**
+   * Descarga los pedidos más recientes de Supabase Cloud para que se vean en la PC
+   */
+  async fetchFromCloud(): Promise<BellagioOrder[]> {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('description')
+        .eq('id', 'sys-bellagio-orders');
+
+      if (!error && data && data.length > 0 && data[0]?.description) {
+        const cloudOrders: BellagioOrder[] = JSON.parse(data[0].description);
+        if (Array.isArray(cloudOrders)) {
+          if (cloudOrders.length > 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudOrders));
+            return cloudOrders.sort((a, b) => b.orderDate.localeCompare(a.orderDate));
+          } else {
+            const localOrders = this.getOrders();
+            if (localOrders.length > 0) {
+              await this.syncToCloud(localOrders);
+            }
+          }
+        }
+      } else {
+        const localOrders = this.getOrders();
+        if (localOrders.length > 0) {
+          await this.syncToCloud(localOrders);
+        }
+      }
+    } catch (err) {
+      console.warn('Error trayendo pedidos de Bellagio desde la nube:', err);
+    }
+    return this.getOrders();
   },
 
   saveOrder(
@@ -49,6 +104,9 @@ export const BellagioService = {
       console.error('Error guardando pedido de Bellagio en localStorage:', err);
     }
 
+    // Sincronizar en la nube automáticamente
+    this.syncToCloud(orders);
+
     return newOrder;
   },
 
@@ -59,6 +117,8 @@ export const BellagioService = {
     } catch (err) {
       console.error('Error eliminando pedido de Bellagio:', err);
     }
+
+    this.syncToCloud(orders);
   },
 
   /**
@@ -98,6 +158,8 @@ export const BellagioService = {
     } catch (err) {
       console.error('Error actualizando estado del pedido Bellagio:', err);
     }
+
+    this.syncToCloud(orders);
 
     return order;
   },
@@ -176,6 +238,8 @@ export const BellagioService = {
     } catch (err) {
       console.error('Error actualizando estado anulado del pedido:', err);
     }
+
+    this.syncToCloud(orders);
 
     return order;
   },

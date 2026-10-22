@@ -57,15 +57,21 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
   const [payingOrder, setPayingOrder] = useState<BellagioOrder | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id || '');
 
-  // Cargar pedidos al abrir
+  // Cargar pedidos al abrir (inmediato desde local + actualización fresca desde la nube)
   useEffect(() => {
     if (isOpen) {
       setOrders(BellagioService.getOrders());
+      BellagioService.fetchFromCloud().then((fresh) => {
+        setOrders(fresh);
+      });
     }
   }, [isOpen]);
 
   const refreshOrders = () => {
     setOrders(BellagioService.getOrders());
+    BellagioService.fetchFromCloud().then((fresh) => {
+      setOrders(fresh);
+    });
   };
 
   // Cálculo en vivo de la comisión al escribir en el formulario (4%)

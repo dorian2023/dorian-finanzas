@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { CloudSyncService, type CloudSyncStatus } from '../../shared/lib/cloudSyncService';
 import { StorageService } from '../../shared/lib/storage';
+import { BellagioService } from '../bellagio/bellagioService';
 
 interface CloudSyncModalProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
     txs: StorageService.getTransactions().length,
     tasks: StorageService.getTasks().length,
     debts: StorageService.getDebts().length,
+    bellagio: BellagioService.getOrders().length,
   }));
 
   const refreshCounts = () => {
@@ -47,6 +49,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
       txs: StorageService.getTransactions().length,
       tasks: StorageService.getTasks().length,
       debts: StorageService.getDebts().length,
+      bellagio: BellagioService.getOrders().length,
     });
   };
 
@@ -218,15 +221,15 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 8,
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 6,
             marginBottom: 16,
           }}
         >
           <div
             style={{
               background: 'var(--badge-bg-neutral)',
-              padding: '10px',
+              padding: '10px 4px',
               borderRadius: 12,
               textAlign: 'center',
             }}
@@ -234,12 +237,12 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
             <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-primary)', display: 'block' }}>
               {counts.txs}
             </span>
-            <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Transacciones</span>
+            <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Gastos</span>
           </div>
           <div
             style={{
               background: 'var(--badge-bg-neutral)',
-              padding: '10px',
+              padding: '10px 4px',
               borderRadius: 12,
               textAlign: 'center',
             }}
@@ -252,7 +255,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
           <div
             style={{
               background: 'var(--badge-bg-neutral)',
-              padding: '10px',
+              padding: '10px 4px',
               borderRadius: 12,
               textAlign: 'center',
             }}
@@ -261,6 +264,20 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
               {counts.debts}
             </span>
             <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Deudas</span>
+          </div>
+          <div
+            style={{
+              background: 'rgba(168, 85, 247, 0.12)',
+              border: '1px solid rgba(168, 85, 247, 0.25)',
+              padding: '10px 4px',
+              borderRadius: 12,
+              textAlign: 'center',
+            }}
+          >
+            <span style={{ fontSize: 16, fontWeight: 900, color: '#c084fc', display: 'block' }}>
+              {counts.bellagio}
+            </span>
+            <span style={{ fontSize: 10, color: '#c084fc', fontWeight: 700 }}>Bellagio</span>
           </div>
         </div>
 

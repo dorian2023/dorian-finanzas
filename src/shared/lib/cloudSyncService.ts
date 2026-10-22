@@ -1,6 +1,8 @@
 import { supabase } from './supabaseClient';
 import { StorageService } from './storage';
 import { DatabaseService } from './dbService';
+import { BellagioService } from '../../features/bellagio/bellagioService';
+import { DailyNotesService } from '../../features/calendar/dailyNotesService';
 
 export type CloudSyncStatus = 'connected' | 'syncing' | 'offline' | 'error';
 
@@ -204,6 +206,12 @@ class CloudSyncManager {
         }
       }
 
+      // 5. Subir pedidos de Bellagio y notas del calendario
+      await Promise.all([
+        BellagioService.syncToCloud(),
+        DailyNotesService.syncToCloud(),
+      ]);
+
       this.setStatus('connected');
       return {
         success: true,
@@ -237,6 +245,8 @@ class CloudSyncManager {
         DatabaseService.getAccounts(),
         DatabaseService.getCategories(),
         DatabaseService.getSources(),
+        BellagioService.fetchFromCloud(),
+        DailyNotesService.fetchFromCloud(),
       ]);
 
       this.setStatus('connected');
