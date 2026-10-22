@@ -8,21 +8,18 @@ import {
   Eye,
   EyeOff,
   Delete,
-  Sparkles,
-  CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
 import { AuthService } from './authService';
+import { supabase } from '../../shared/lib/supabaseClient';
 
 interface AuthScreenProps {
   onAuthenticated: () => void;
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
-  const [hasAccount, setHasAccount] = useState(() => AuthService.hasAccount());
   const [hasPin, setHasPin] = useState(() => AuthService.hasPin());
-  const [authMode, setAuthMode] = useState<'pin' | 'login' | 'register'>(() => {
-    if (!AuthService.hasAccount()) return 'register';
+  const [authMode, setAuthMode] = useState<'pin' | 'login'>(() => {
     if (AuthService.hasPin()) return 'pin';
     return 'login';
   });
@@ -31,10 +28,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
 
-  // Estado de Formularios (Login / Register)
+  // Estado del Formulario de Inicio de Sesión
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [newPin, setNewPin] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,8 +39,28 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
     const creds = AuthService.getStoredCredentials();
     if (creds) {
       setEmail(creds.email);
-      setHasAccount(true);
       setHasPin(!!(creds.pinHash && creds.isPinEnabled));
+    } else {
+      // Verificar si hay credenciales maestras en Supabase para precargar el correo
+      supabase
+        .from('tasks')
+        .select('description')
+        .eq('id', 'sys-master-auth')
+        .then(({ data }) => {
+          if (data && data[0]?.description) {
+            try {
+              const cloudCreds = JSON.parse(data[0].description);
+              if (cloudCreds.email) {
+                setEmail(cloudCreds.email);
+              }
+              if (cloudCreds.pinHash) {
+                setHasPin(true);
+              }
+            } catch {
+              // Ignorar
+            }
+          }
+        });
     }
   }, []);
 
@@ -88,26 +104,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
       onAuthenticated();
     } else {
       setFormError(res.error || 'Credenciales incorrectas');
-    }
-  };
-
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-
-    if (newPin && newPin.length !== 4) {
-      setFormError('El PIN de acceso rápido debe tener exactamente 4 dígitos');
-      return;
-    }
-
-    setIsLoading(true);
-    const res = await AuthService.register(email, password, newPin || undefined);
-    setIsLoading(false);
-
-    if (res.success) {
-      onAuthenticated();
-    } else {
-      setFormError(res.error || 'Error al configurar cuenta');
     }
   };
 
@@ -191,7 +187,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
               </span>
             </div>
             <p style={{ fontSize: 12, color: 'var(--text-secondary, #94a3b8)', marginBottom: 20 }}>
-              Ingresa tu PIN de 4 dígitos para desbloquear
+              Ingresa tu PIN de 4 dígitos para acceder
             </p>
 
             {/* Los 4 puntos del PIN */}
@@ -274,7 +270,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
                 </button>
               ))}
 
-              {/* Botón vacío o cambio a clave */}
+              {/* Botón cambiar a clave */}
               <button
                 type="button"
                 onClick={() => setAuthMode('login')}
@@ -349,7 +345,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
                 padding: '6px 12px',
               }}
             >
-              ¿Prefieres ingresar con Correo y Clave?
+              ¿Prefieres ingresar con Correo y Contraseña?
             </button>
           </div>
         )}
@@ -370,9 +366,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary, #ffffff)' }}>
-                Iniciar Sesión
-              </h2>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary, #ffffff)' }}>
+                  Iniciar Sesión
+                </h2>
+                <p style={{ fontSize: 11, color: 'var(--text-secondary, #94a3b8)', marginTop: 2 }}>
+                  Ingresa tus credenciales maestras
+                </p>
+              </div>
+
               {hasPin && (
                 <button
                   type="button"
@@ -386,9 +388,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
                     borderRadius: 8,
                     border: 'none',
                     cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
                   }}
                 >
-                  Usar PIN 4 Dígitos
+                  <KeyRound size={12} /> PIN 4 Dígitos
                 </button>
               )}
             </div>
@@ -421,10 +426,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
                 <input
                   type="email"
                   required
-                  placeholder="tu@correo.com"
+                  placeholder="ej. dorian@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{ width: '100%', padding: '11px 12px 11px 36px', fontSize: 13, borderRadius: 12 }}
+                  autoFocus
                 />
                 <Mail size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
               </div>
@@ -477,170 +483,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
               {isLoading ? 'Verificando...' : 'Entrar a Dorian Finanzas'}
               <ArrowRight size={16} />
             </button>
-
-            <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <button
-                type="button"
-                onClick={() => setAuthMode('register')}
-                style={{ background: 'none', border: 'none', color: '#c084fc', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-              >
-                ¿Quieres cambiar o crear nueva cuenta?
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* ======================================================== */}
-        {/* VISTA 3: REGISTRO / CONFIGURACIÓN DE CUENTA               */}
-        {/* ======================================================== */}
-        {authMode === 'register' && (
-          <form
-            onSubmit={handleRegisterSubmit}
-            className="glass-panel"
-            style={{
-              borderRadius: 24,
-              padding: '24px 20px',
-              border: '1px solid rgba(168, 85, 247, 0.3)',
-              background: 'rgba(15, 23, 42, 0.75)',
-              backdropFilter: 'blur(20px)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <Sparkles size={18} color="#c084fc" />
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary, #ffffff)' }}>
-                Configurar Cuenta y Seguridad
-              </h2>
-            </div>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary, #94a3b8)', marginBottom: 16 }}>
-              Protege tus finanzas con correo, contraseña y PIN de 4 dígitos.
-            </p>
-
-            {formError && (
-              <div
-                style={{
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #ef4444',
-                  color: '#f87171',
-                  padding: '10px 12px',
-                  borderRadius: 12,
-                  fontSize: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  marginBottom: 14,
-                }}
-              >
-                <AlertCircle size={16} />
-                <span>{formError}</span>
-              </div>
-            )}
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary, #94a3b8)', marginBottom: 4, textTransform: 'uppercase' }}>
-                Tu Correo Electrónico
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="email"
-                  required
-                  placeholder="ej. dorian@gmail.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{ width: '100%', padding: '11px 12px 11px 36px', fontSize: 13, borderRadius: 12 }}
-                />
-                <Mail size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary, #94a3b8)', marginBottom: 4, textTransform: 'uppercase' }}>
-                Contraseña Maestra (mínimo 6 caracteres)
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder="Crea una contraseña segura"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: '100%', padding: '11px 36px 11px 36px', fontSize: 13, borderRadius: 12 }}
-                />
-                <Lock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#10b981', marginBottom: 4, textTransform: 'uppercase' }}>
-                PIN Rápido de 4 Dígitos (Estilo Bancario)
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="password"
-                  maxLength={4}
-                  pattern="[0-9]*"
-                  inputMode="numeric"
-                  placeholder="Ej. 1234"
-                  value={newPin}
-                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  style={{
-                    width: '100%',
-                    padding: '11px 12px 11px 36px',
-                    fontSize: 14,
-                    letterSpacing: 4,
-                    fontWeight: 800,
-                    borderRadius: 12,
-                    fontFamily: 'var(--font-mono)',
-                  }}
-                />
-                <KeyRound size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#10b981' }} />
-              </div>
-              <span style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, display: 'block' }}>
-                Te permitirá abrir la app en tu teléfono con 4 toques sin tener que escribir tu correo siempre.
-              </span>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: 14,
-                background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
-                color: '#ffffff',
-                fontSize: 14,
-                fontWeight: 800,
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                boxShadow: '0 4px 16px rgba(168, 85, 247, 0.35)',
-              }}
-            >
-              {isLoading ? 'Guardando...' : 'Crear y Proteger mi App'}
-              <CheckCircle2 size={16} />
-            </button>
-
-            {hasAccount && (
-              <div style={{ textAlign: 'center', marginTop: 14 }}>
-                <button
-                  type="button"
-                  onClick={() => setAuthMode('login')}
-                  style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Volver a Iniciar Sesión
-                </button>
-              </div>
-            )}
           </form>
         )}
       </div>

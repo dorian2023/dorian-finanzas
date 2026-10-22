@@ -106,6 +106,20 @@ export const AuthService = {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(creds));
       this.setSessionActive(true);
 
+      // Guardar credenciales maestras en Supabase para sincronizar con la PC
+      try {
+        await supabase.from('tasks').upsert({
+          id: 'sys-master-auth',
+          title: '__DORIAN_MASTER_AUTH__',
+          description: JSON.stringify(creds),
+          due_date: '2099-12-31',
+          priority: 'high',
+          is_completed: true,
+        });
+      } catch (err) {
+        console.warn('Error sincronizando credenciales con la nube:', err);
+      }
+
       // Intentar vincular silenciosamente con Supabase Auth si está disponible
       try {
         await supabase.auth.signUp({
@@ -113,7 +127,7 @@ export const AuthService = {
           password,
         });
       } catch {
-        // Ignorar fallo de red en Supabase, la seguridad local queda activa
+        // Ignorar fallo de red en Supabase
       }
 
       return { success: true };
@@ -123,7 +137,7 @@ export const AuthService = {
   },
 
   /**
-   * Inicia sesión con Correo y Contraseña
+   * Inicia sesión con Correo y Contraseña (con verificación local y en la nube)
    */
   async loginWithPassword(
     email: string,
@@ -131,38 +145,63 @@ export const AuthService = {
   ): Promise<{ success: boolean; error?: string }> {
     const creds = this.getStoredCredentials();
     const cleanEmail = email.trim().toLowerCase();
+    const inputPassHash = await sha256(password);
 
-    // 1. Verificación contra credenciales guardadas
+    // 1. Verificación contra credenciales guardadas en este dispositivo
     if (creds) {
-      const inputPassHash = await sha256(password);
       if (creds.email === cleanEmail && creds.passwordHash === inputPassHash) {
         this.setSessionActive(true);
         return { success: true };
       }
     }
 
-    // 2. Si no coincide o es un nuevo dispositivo, intentar con Supabase Auth
+    // 2. Verificación contra credenciales maestras en Supabase (si vienes de la PC o nuevo dispositivo)
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      });
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('description')
+        .eq('id', 'sys-master-auth');
 
-      if (!error && data.user) {
-        // Guardar credenciales validadas por Supabase localmente para soporte offline
-        const passwordHash = await sha256(password);
+      if (!error && data && data.length > 0 && data[0].description) {
+        const cloudCreds: StoredCredentials = JSON.parse(data[0].description);
+        // Si el registro de la nube tiene credenciales válidas
+        if (cloudCreds.email && cloudCreds.passwordHash) {
+          if (cloudCreds.email === cleanEmail && cloudCreds.passwordHash === inputPassHash) {
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(cloudCreds));
+            this.setSessionActive(true);
+            return { success: true };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Error verificando en Supabase:', err);
+    }
+
+    // 3. Si no hay credenciales en la nube aún (registro inicial directo desde login)
+    try {
+      const { data } = await supabase.from('tasks').select('id').eq('id', 'sys-master-auth');
+      const isEmpty = !data || data.length === 0;
+      if (isEmpty) {
         const newCreds: StoredCredentials = {
           email: cleanEmail,
-          passwordHash,
+          passwordHash: inputPassHash,
           isPinEnabled: false,
           lockOnExit: false,
         };
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newCreds));
+        await supabase.from('tasks').upsert({
+          id: 'sys-master-auth',
+          title: '__DORIAN_MASTER_AUTH__',
+          description: JSON.stringify(newCreds),
+          due_date: '2099-12-31',
+          priority: 'high',
+          is_completed: true,
+        });
         this.setSessionActive(true);
         return { success: true };
       }
     } catch {
-      // Continuar al error general
+      // Ignorar
     }
 
     return {
@@ -172,18 +211,36 @@ export const AuthService = {
   },
 
   /**
-   * Desbloqueo rápido mediante PIN de 4 dígitos
+   * Desbloqueo rápido mediante PIN de 4 dígitos (con soporte multidispositivo)
    */
   async verifyPin(pin: string): Promise<boolean> {
     const creds = this.getStoredCredentials();
-    if (!creds || !creds.pinHash || !creds.isPinEnabled) return false;
-
     const inputPinHash = await sha256(pin.trim());
-    const valid = creds.pinHash === inputPinHash;
-    if (valid) {
-      this.setSessionActive(true);
+
+    // 1. Verificación local
+    if (creds && creds.pinHash && creds.isPinEnabled) {
+      if (creds.pinHash === inputPinHash) {
+        this.setSessionActive(true);
+        return true;
+      }
     }
-    return valid;
+
+    // 2. Verificación en la nube
+    try {
+      const { data } = await supabase.from('tasks').select('description').eq('id', 'sys-master-auth');
+      if (data && data[0]?.description) {
+        const cloudCreds: StoredCredentials = JSON.parse(data[0].description);
+        if (cloudCreds.pinHash === inputPinHash) {
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(cloudCreds));
+          this.setSessionActive(true);
+          return true;
+        }
+      }
+    } catch {
+      // Ignorar
+    }
+
+    return false;
   },
 
   /**

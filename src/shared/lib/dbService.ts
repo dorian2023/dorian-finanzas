@@ -166,8 +166,10 @@ export const DatabaseService = {
     try {
       const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
       if (!error && data) {
-        const tasks: TaskReminder[] = data.map((row) => ({
-          id: row.id,
+        const tasks: TaskReminder[] = data
+          .filter((row) => !row.id.startsWith('sys-'))
+          .map((row) => ({
+            id: row.id,
           title: row.title,
           description: row.description || undefined,
           dueDate: row.due_date,
