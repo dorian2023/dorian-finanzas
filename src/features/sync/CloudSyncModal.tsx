@@ -36,11 +36,27 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  if (!isOpen) return null;
+  const [counts, setCounts] = useState(() => ({
+    txs: StorageService.getTransactions().length,
+    tasks: StorageService.getTasks().length,
+    debts: StorageService.getDebts().length,
+  }));
 
-  const localTxs = StorageService.getTransactions().length;
-  const localTasks = StorageService.getTasks().length;
-  const localDebts = StorageService.getDebts().length;
+  const refreshCounts = () => {
+    setCounts({
+      txs: StorageService.getTransactions().length,
+      tasks: StorageService.getTasks().length,
+      debts: StorageService.getDebts().length,
+    });
+  };
+
+  React.useEffect(() => {
+    if (isOpen) {
+      refreshCounts();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handlePushToCloud = async () => {
     setIsProcessing(true);
@@ -53,6 +69,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
         type: 'success',
         message: `¡Respaldo exitoso! Subidas ${result.txCount} transacciones, ${result.tasksCount} tareas y ${result.debtsCount} deudas a Supabase Cloud.`,
       });
+      refreshCounts();
       onRefreshAll();
     } else {
       setFeedback({
@@ -69,6 +86,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
     setIsProcessing(false);
 
     if (success) {
+      refreshCounts();
       setFeedback({
         type: 'success',
         message: '¡Datos actualizados desde la nube exitosamente!',
@@ -214,7 +232,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-primary)', display: 'block' }}>
-              {localTxs}
+              {counts.txs}
             </span>
             <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Transacciones</span>
           </div>
@@ -227,7 +245,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-primary)', display: 'block' }}>
-              {localTasks}
+              {counts.tasks}
             </span>
             <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Tareas</span>
           </div>
@@ -240,7 +258,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-primary)', display: 'block' }}>
-              {localDebts}
+              {counts.debts}
             </span>
             <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Deudas</span>
           </div>

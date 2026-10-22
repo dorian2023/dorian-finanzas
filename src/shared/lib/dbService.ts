@@ -97,7 +97,16 @@ export const DatabaseService = {
           toAccountId: row.to_account_id || undefined,
           occurredAt: row.occurred_at,
         }));
-        localStorage.setItem('dorian_transactions_v1', JSON.stringify(transactions));
+        try {
+          localStorage.setItem('dorian_transactions_v1', JSON.stringify(transactions));
+        } catch {
+          const lightweight = transactions.map((t) => ({ ...t, receiptUrl: undefined }));
+          try {
+            localStorage.setItem('dorian_transactions_v1', JSON.stringify(lightweight));
+          } catch {
+            // Ignorar si falla storage local
+          }
+        }
         return transactions;
       }
     } catch (err) {
