@@ -49,6 +49,7 @@ interface DashboardViewProps {
   onNavigateToTab: (tab: 'history' | 'tasks' | 'debts' | 'analytics') => void;
   onOpenCalendar: () => void;
   onOpenBellagio: () => void;
+  onOpenPolicia?: () => void;
   cloudStatus?: CloudSyncStatus;
   onOpenCloudSync?: () => void;
 }
@@ -75,6 +76,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToTab,
   onOpenCalendar,
   onOpenBellagio,
+  onOpenPolicia,
   cloudStatus = 'connected',
   onOpenCloudSync,
 }) => {
@@ -159,9 +161,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: -0.3 }}>Dorian 👋</span>
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)', fontSize: 10, padding: '2px 8px' }}>
+            <button
+              type="button"
+              onClick={onOpenPolicia}
+              className="badge"
+              style={{
+                background: 'rgba(59, 130, 246, 0.18)',
+                color: '#60a5fa',
+                border: '1.5px solid rgba(59, 130, 246, 0.45)',
+                fontSize: 10,
+                fontWeight: 800,
+                padding: '3px 9px',
+                cursor: 'pointer',
+                borderRadius: 'var(--radius-full)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                transition: 'all 0.15s ease',
+              }}
+              title="Registrar sueldos y bonos de Policía (Bs)"
+            >
               <Shield size={10} /> Policía
-            </span>
+            </button>
             <button
               type="button"
               onClick={onOpenBellagio}
@@ -180,9 +201,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 gap: 4,
                 transition: 'all 0.15s ease',
               }}
-              title="Abrir pedidos y comisiones (4%) de Muebles Bellagio"
+              title="Abrir pedidos y comisiones de Muebles Bellagio"
             >
-              <Briefcase size={10} /> Bellagio 4%
+              <Briefcase size={10} /> Bellagio
             </button>
           </div>
         </div>

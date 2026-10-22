@@ -4,6 +4,7 @@ import {
   TrendingUp,
   ArrowRightLeft,
   Trash2,
+  Edit2,
   X,
   Camera
 } from 'lucide-react';
@@ -15,6 +16,7 @@ interface HistoryViewProps {
   accounts: Account[];
   categories: Category[];
   onDeleteTransaction: (id: string) => void;
+  onEditTransaction: (tx: Transaction) => void;
 }
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
@@ -22,6 +24,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   accounts,
   categories,
   onDeleteTransaction,
+  onEditTransaction,
 }) => {
   const [selectedCurrency, setSelectedCurrency] = useState<'ALL' | 'USD' | 'VES'>('ALL');
   const [selectedAccountId, setSelectedAccountId] = useState<string>('ALL');
@@ -137,11 +140,14 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
               <div
                 key={tx.id}
                 className="glass-card"
+                onClick={() => onEditTransaction(tx)}
                 style={{
                   padding: '14px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -192,31 +198,75 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                     Tasa: Bs. {tx.rateUsed.toFixed(2)}
                   </div>
 
-                  <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
                     {tx.receiptUrl && (
                       <button
-                        onClick={() => setPreviewPhoto(tx.receiptUrl || null)}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewPhoto(tx.receiptUrl || null);
+                        }}
                         style={{
-                          padding: '3px 8px',
+                          padding: '4px 8px',
                           borderRadius: 'var(--radius-sm)',
                           background: 'rgba(16, 185, 129, 0.15)',
                           color: '#34d399',
                           fontSize: 10,
                           fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 3,
+                          border: 'none',
+                          cursor: 'pointer',
                         }}
                       >
-                        <Camera size={12} /> Ver Foto
+                        <Camera size={12} /> Foto
                       </button>
                     )}
                     <button
-                      onClick={() => {
-                        if (window.confirm('¿Eliminar este movimiento?')) {
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditTransaction(tx);
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(59, 130, 246, 0.15)',
+                        color: '#60a5fa',
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 3,
+                      }}
+                      title="Corregir este movimiento"
+                    >
+                      <Edit2 size={12} /> Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`¿Seguro que deseas eliminar este movimiento (${tx.merchant || 'Movimiento'})?`)) {
                           onDeleteTransaction(tx.id);
                         }
                       }}
-                      style={{ color: 'var(--text-tertiary)', padding: 2 }}
+                      style={{
+                        padding: '4px 7px',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        color: '#f87171',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                      title="Eliminar movimiento"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>

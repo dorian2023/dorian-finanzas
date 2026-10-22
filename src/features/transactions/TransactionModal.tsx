@@ -8,7 +8,9 @@ import {
   ArrowRightLeft,
   Sparkles,
   ImageIcon,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  Edit2
 } from 'lucide-react';
 import type { Account, Category, IncomeSource, Transaction, TransactionType } from './types';
 import { formatMoney, toMinor, type Currency } from '../../shared/lib/money';
@@ -19,24 +21,28 @@ interface TransactionModalProps {
   isOpen: boolean;
   initialType?: TransactionType;
   initialDate?: string; // YYYY-MM-DD
+  editingTransaction?: Transaction | null;
   todayRate: number;
   accounts: Account[];
   categories: Category[];
   sources: IncomeSource[];
   onClose: () => void;
   onSuccess: () => void;
+  onDelete?: (id: string) => void;
 }
 
 export const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
   initialType = 'expense',
   initialDate,
+  editingTransaction,
   todayRate,
   accounts,
   categories,
   sources,
   onClose,
   onSuccess,
+  onDelete,
 }) => {
   const [type, setType] = useState<TransactionType>(initialType);
   const [txDate, setTxDate] = useState<string>(initialDate || new Date().toISOString().split('T')[0]);
@@ -70,34 +76,58 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen) {
-      setType(initialType);
-      setTxDate(initialDate || new Date().toISOString().split('T')[0]);
-      resetForm();
+      if (editingTransaction) {
+        setType(editingTransaction.type);
+        setTxDate(editingTransaction.occurredAt.split('T')[0]);
+        // Formato decimal para el input
+        const decimalStr = (editingTransaction.amountMinor / 100).toFixed(2).replace(/\.00$/, '');
+        setAmountInput(decimalStr);
+        setCurrency(editingTransaction.currency);
+        setAccountId(editingTransaction.accountId);
+        if (editingTransaction.toAccountId) {
+          setToAccountId(editingTransaction.toAccountId);
+        }
+        if (editingTransaction.categoryId) {
+          setCategoryId(editingTransaction.categoryId);
+        }
+        if (editingTransaction.sourceId) {
+          setSourceId(editingTransaction.sourceId);
+        }
+        setMerchant(editingTransaction.merchant || '');
+        setNote(editingTransaction.note || '');
+        setReceiptPreview(editingTransaction.receiptUrl || null);
+        setErrorMessage(null);
+        setIsSubmitting(false);
+      } else {
+        setType(initialType);
+        setTxDate(initialDate || new Date().toISOString().split('T')[0]);
+        resetForm();
 
-      // Asegurar que la cuenta seleccionada sea válida y exista
-      const validAccount = accounts.find((a) => a.id === accountId) || accounts[0];
-      if (validAccount) {
-        setAccountId(validAccount.id);
-        setCurrency(validAccount.currency);
-      }
+        // Asegurar que la cuenta seleccionada sea válida y exista
+        const validAccount = accounts.find((a) => a.id === accountId) || accounts[0];
+        if (validAccount) {
+          setAccountId(validAccount.id);
+          setCurrency(validAccount.currency);
+        }
 
-      // Asegurar cuenta destino para cambio
-      const validToAccount = accounts.find((a) => a.id !== (validAccount?.id || '')) || accounts[1] || accounts[0];
-      if (validToAccount) {
-        setToAccountId(validToAccount.id);
-      }
+        // Asegurar cuenta destino para cambio
+        const validToAccount = accounts.find((a) => a.id !== (validAccount?.id || '')) || accounts[1] || accounts[0];
+        if (validToAccount) {
+          setToAccountId(validToAccount.id);
+        }
 
-      // Asegurar categoría
-      if (!categoryId || !categories.some((c) => c.id === categoryId)) {
-        if (categories[0]) setCategoryId(categories[0].id);
-      }
+        // Asegurar categoría
+        if (!categoryId || !categories.some((c) => c.id === categoryId)) {
+          if (categories[0]) setCategoryId(categories[0].id);
+        }
 
-      // Asegurar fuente de ingreso
-      if (!sourceId || !sources.some((s) => s.id === sourceId)) {
-        if (sources[0]) setSourceId(sources[0].id);
+        // Asegurar fuente de ingreso
+        if (!sourceId || !sources.some((s) => s.id === sourceId)) {
+          if (sources[0]) setSourceId(sources[0].id);
+        }
       }
     }
-  }, [isOpen, initialType, accounts, categories, sources]);
+  }, [isOpen, editingTransaction, initialType, accounts, categories, sources]);
 
   const handleClose = () => {
     resetForm();
@@ -160,12 +190,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         ? (txDate.includes('T') ? txDate : `${txDate}T12:00:00.000Z`)
         : new Date().toISOString();
 
-      const newTx: Omit<Transaction, 'id' | 'occurredAt'> & { occurredAt: string } = {
+      const newTx: Omit<Transaction, 'id' | 'occurredAt'> & { id?: string; occurredAt: string } = {
+        id: editingTransaction ? editingTransaction.id : undefined,
         type,
         accountId: finalAccountId,
         amountMinor,
         currency: finalCurrency,
-        rateUsed: todayRate,
+        rateUsed: editingTransaction ? (editingTransaction.rateUsed || todayRate) : todayRate,
         categoryId: type === 'expense' ? (categoryId || categories[0]?.id) : undefined,
         sourceId: type === 'income' ? (sourceId || sources[0]?.id) : undefined,
         merchant: merchant.trim() || undefined,
@@ -199,61 +230,106 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="modal-handle" />
 
-        {/* Header con pestañas de tipo */}
+        {/* Header con pestañas de tipo o título de edición */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{
-            display: 'flex',
-            background: 'rgba(255, 255, 255, 0.06)',
-            padding: 3,
-            borderRadius: 'var(--radius-full)'
-          }}>
-            <button
-              type="button"
-              onClick={() => setType('expense')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                fontSize: 12,
-                fontWeight: 700,
-                color: type === 'expense' ? '#fb7185' : 'var(--text-tertiary)',
-                background: type === 'expense' ? 'rgba(244, 63, 94, 0.2)' : 'none',
-              }}
-            >
-              <TrendingDown size={14} /> Gasto
-            </button>
-            <button
-              type="button"
-              onClick={() => setType('income')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                fontSize: 12,
-                fontWeight: 700,
-                color: type === 'income' ? '#34d399' : 'var(--text-tertiary)',
-                background: type === 'income' ? 'rgba(16, 185, 129, 0.2)' : 'none',
-              }}
-            >
-              <TrendingUp size={14} /> Ingreso
-            </button>
-            <button
-              type="button"
-              onClick={() => setType('exchange')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                fontSize: 12,
-                fontWeight: 700,
-                color: type === 'exchange' ? '#38bdf8' : 'var(--text-tertiary)',
-                background: type === 'exchange' ? 'rgba(56, 189, 248, 0.2)' : 'none',
-              }}
-            >
-              <ArrowRightLeft size={14} /> Cambio
+          {editingTransaction ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  color: '#60a5fa',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Edit2 size={16} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Corregir Movimiento
+                </h3>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                  Edita monto, cuenta o detalle
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex',
+              background: 'rgba(255, 255, 255, 0.06)',
+              padding: 3,
+              borderRadius: 'var(--radius-full)'
+            }}>
+              <button
+                type="button"
+                onClick={() => setType('expense')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: type === 'expense' ? '#fb7185' : 'var(--text-tertiary)',
+                  background: type === 'expense' ? 'rgba(244, 63, 94, 0.2)' : 'none',
+                }}
+              >
+                <TrendingDown size={14} /> Gasto
+              </button>
+              <button
+                type="button"
+                onClick={() => setType('income')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: type === 'income' ? '#34d399' : 'var(--text-tertiary)',
+                  background: type === 'income' ? 'rgba(16, 185, 129, 0.2)' : 'none',
+                }}
+              >
+                <TrendingUp size={14} /> Ingreso
+              </button>
+              <button
+                type="button"
+                onClick={() => setType('exchange')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: type === 'exchange' ? '#38bdf8' : 'var(--text-tertiary)',
+                  background: type === 'exchange' ? 'rgba(56, 189, 248, 0.2)' : 'none',
+                }}
+              >
+                <ArrowRightLeft size={14} /> Cambio
+              </button>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {editingTransaction && onDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('¿Seguro que deseas eliminar este movimiento permanentemente?')) {
+                    onDelete(editingTransaction.id);
+                    handleClose();
+                  }
+                }}
+                className="btn-icon"
+                style={{ color: '#f87171', width: 34, height: 34, background: 'rgba(239, 68, 68, 0.12)' }}
+                title="Eliminar movimiento"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+            <button className="btn-icon" onClick={handleClose}>
+              <X size={18} />
             </button>
           </div>
-
-          <button className="btn-icon" onClick={handleClose}>
-            <X size={18} />
-          </button>
         </div>
 
         {/* Captura de Foto de Factura (Cámara directa o Galería) */}
@@ -701,6 +777,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           >
             {isSubmitting ? (
               <span>Guardando...</span>
+            ) : editingTransaction ? (
+              <>
+                <Check size={18} /> Guardar Corrección
+              </>
             ) : (
               <>
                 <Check size={18} /> Guardar {type === 'expense' ? 'Gasto' : type === 'income' ? 'Ingreso' : 'Cambio'}

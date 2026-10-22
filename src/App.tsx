@@ -16,6 +16,7 @@ import { TransactionModal } from './features/transactions/TransactionModal';
 import { RateModal } from './features/exchange-rate/RateModal';
 import { TaskModal } from './features/tasks/TaskModal';
 import { BellagioSalesModal } from './features/bellagio/BellagioSalesModal';
+import { PoliciaIncomeModal } from './features/policia/PoliciaIncomeModal';
 import { AuthScreen } from './features/auth/AuthScreen';
 import { AuthService } from './features/auth/authService';
 import { CloudSyncModal } from './features/sync/CloudSyncModal';
@@ -65,6 +66,7 @@ export function App() {
   const [tasks, setTasks] = useState<TaskReminder[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [isBellagioModalOpen, setIsBellagioModalOpen] = useState(false);
+  const [isPoliciaModalOpen, setIsPoliciaModalOpen] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sources, setSources] = useState<IncomeSource[]>([]);
@@ -79,6 +81,7 @@ export function App() {
   const [isRateModalOpen, setIsRateModalOpen] = useState(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txModalType, setTxModalType] = useState<TransactionType>('expense');
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   // Carga reactiva: caché local instantánea + sincronización Supabase
@@ -193,32 +196,43 @@ export function App() {
   const [txModalDate, setTxModalDate] = useState<string | undefined>(undefined);
 
   const handleOpenExpense = () => {
+    setEditingTransaction(null);
     setTxModalType('expense');
     setTxModalDate(undefined);
     setIsTxModalOpen(true);
   };
 
   const handleOpenIncome = () => {
+    setEditingTransaction(null);
     setTxModalType('income');
     setTxModalDate(undefined);
     setIsTxModalOpen(true);
   };
 
   const handleOpenExchange = () => {
+    setEditingTransaction(null);
     setTxModalType('exchange');
     setTxModalDate(undefined);
     setIsTxModalOpen(true);
   };
 
   const handleOpenExpenseForDate = (dateStr: string) => {
+    setEditingTransaction(null);
     setTxModalType('expense');
     setTxModalDate(dateStr);
     setIsTxModalOpen(true);
   };
 
   const handleOpenIncomeForDate = (dateStr: string) => {
+    setEditingTransaction(null);
     setTxModalType('income');
     setTxModalDate(dateStr);
+    setIsTxModalOpen(true);
+  };
+
+  const handleEditTransaction = (tx: Transaction) => {
+    setEditingTransaction(tx);
+    setTxModalType(tx.type);
     setIsTxModalOpen(true);
   };
 
@@ -260,6 +274,7 @@ export function App() {
             onNavigateToTab={(tab) => setActiveTab(tab)}
             onOpenCalendar={() => setActiveTab('calendar')}
             onOpenBellagio={() => setIsBellagioModalOpen(true)}
+            onOpenPolicia={() => setIsPoliciaModalOpen(true)}
             cloudStatus={cloudStatus}
             onOpenCloudSync={() => setIsCloudModalOpen(true)}
           />
@@ -290,6 +305,7 @@ export function App() {
             accounts={accounts}
             categories={categories}
             onDeleteTransaction={handleDeleteTransaction}
+            onEditTransaction={handleEditTransaction}
           />
         )}
 
@@ -380,15 +396,18 @@ export function App() {
         isOpen={isTxModalOpen}
         initialType={txModalType}
         initialDate={txModalDate}
+        editingTransaction={editingTransaction}
         todayRate={activeRate}
         accounts={accounts}
         categories={categories}
         sources={sources}
         onClose={() => {
           setIsTxModalOpen(false);
+          setEditingTransaction(null);
           setTxModalDate(undefined);
         }}
         onSuccess={refreshData}
+        onDelete={handleDeleteTransaction}
       />
 
       <TaskModal
@@ -404,6 +423,15 @@ export function App() {
         todayRate={activeRate}
         onClose={() => setIsBellagioModalOpen(false)}
         onOrderPaidSuccess={refreshData}
+      />
+
+      <PoliciaIncomeModal
+        isOpen={isPoliciaModalOpen}
+        accounts={accounts}
+        transactions={transactions}
+        todayRate={activeRate}
+        onClose={() => setIsPoliciaModalOpen(false)}
+        onSuccess={refreshData}
       />
 
       <CloudSyncModal

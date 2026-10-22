@@ -138,12 +138,21 @@ export const StorageService = {
 
   saveTransaction(tx: Omit<Transaction, 'id' | 'occurredAt'> & { id?: string; occurredAt?: string }): Transaction {
     const transactions = this.getTransactions();
+    const id = tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const occurredAt = tx.occurredAt || new Date().toISOString();
+
     const newTx: Transaction = {
       ...tx,
-      id: tx.id || `tx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      occurredAt: tx.occurredAt || new Date().toISOString(),
+      id,
+      occurredAt,
     };
-    transactions.unshift(newTx);
+
+    const existingIndex = tx.id ? transactions.findIndex((t) => t.id === tx.id) : -1;
+    if (existingIndex >= 0) {
+      transactions[existingIndex] = newTx;
+    } else {
+      transactions.unshift(newTx);
+    }
     try {
       localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
     } catch (err) {

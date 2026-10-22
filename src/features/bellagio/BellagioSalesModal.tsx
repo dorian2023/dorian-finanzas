@@ -231,19 +231,6 @@ export const BellagioSalesModal: React.FC<BellagioSalesModalProps> = ({
                 <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
                   Muebles Bellagio
                 </h2>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    padding: '2px 6px',
-                    borderRadius: 10,
-                    background: 'rgba(168, 85, 247, 0.2)',
-                    color: '#c084fc',
-                    border: '1px solid rgba(168, 85, 247, 0.3)',
-                  }}
-                >
-                  4% COMISIÓN
-                </span>
               </div>
               <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                 Control de pedidos y liquidación de ventas
