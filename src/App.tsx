@@ -16,6 +16,10 @@ import { TransactionModal } from './features/transactions/TransactionModal';
 import { RateModal } from './features/exchange-rate/RateModal';
 import { TaskModal } from './features/tasks/TaskModal';
 import { BellagioSalesModal } from './features/bellagio/BellagioSalesModal';
+import { AuthScreen } from './features/auth/AuthScreen';
+import { AuthService } from './features/auth/authService';
+import { CloudSyncModal } from './features/sync/CloudSyncModal';
+import { CloudSyncService, type CloudSyncStatus } from './shared/lib/cloudSyncService';
 import { StorageService } from './shared/lib/storage';
 import { DatabaseService } from './shared/lib/dbService';
 import {
@@ -65,6 +69,12 @@ export function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [sources, setSources] = useState<IncomeSource[]>([]);
 
+  // Autenticación y Seguridad
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => AuthService.isSessionActive());
+  const [cloudStatus, setCloudStatus] = useState<CloudSyncStatus>('connected');
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
+
   // Estados de Modales
   const [isRateModalOpen, setIsRateModalOpen] = useState(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
@@ -98,6 +108,7 @@ export function App() {
       setAccounts(dbAccs);
       setCategories(dbCats);
       setSources(dbSrcs);
+      setCloudStatus('connected');
     } catch (err) {
       console.warn('Conexión local activa:', err);
     }
@@ -105,6 +116,19 @@ export function App() {
 
   useEffect(() => {
     refreshData();
+
+    // 1. Suscripción al estado de sincronización con la nube
+    const unsubscribeStatus = CloudSyncService.subscribeStatus((status, time) => {
+      setCloudStatus(status);
+      if (time) setLastSyncTime(time);
+    });
+
+    // 2. Suscripción en tiempo real (Supabase Realtime) para actualizar datos automáticamente cuando cambian en otro dispositivo
+    const unsubscribeRealtime = CloudSyncService.initRealtime(() => {
+      refreshData();
+    });
+
+    CloudSyncService.checkConnection();
 
     // Actualización automática de tasas al abrir la app si está habilitada
     const currentConfig = ExchangeRateService.getConfig();
@@ -115,7 +139,24 @@ export function App() {
         }
       });
     }
+
+    return () => {
+      unsubscribeStatus();
+      unsubscribeRealtime();
+    };
   }, []);
+
+  const handleLockApp = () => {
+    AuthService.lock();
+    setIsAuthenticated(false);
+    setIsCloudModalOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await AuthService.logout();
+    setIsAuthenticated(false);
+    setIsCloudModalOpen(false);
+  };
 
   // Handlers para tasas
   const handleSwitchRateSource = (source: RateSource) => {
@@ -181,6 +222,17 @@ export function App() {
     setIsTxModalOpen(true);
   };
 
+  if (!isAuthenticated) {
+    return (
+      <AuthScreen
+        onAuthenticated={() => {
+          setIsAuthenticated(true);
+          refreshData();
+        }}
+      />
+    );
+  }
+
   return (
     <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column' }}>
       {/* Vistas Principales */}
@@ -208,6 +260,8 @@ export function App() {
             onNavigateToTab={(tab) => setActiveTab(tab)}
             onOpenCalendar={() => setActiveTab('calendar')}
             onOpenBellagio={() => setIsBellagioModalOpen(true)}
+            cloudStatus={cloudStatus}
+            onOpenCloudSync={() => setIsCloudModalOpen(true)}
           />
         )}
 
@@ -350,6 +404,16 @@ export function App() {
         todayRate={activeRate}
         onClose={() => setIsBellagioModalOpen(false)}
         onOrderPaidSuccess={refreshData}
+      />
+
+      <CloudSyncModal
+        isOpen={isCloudModalOpen}
+        syncStatus={cloudStatus}
+        lastSyncTime={lastSyncTime}
+        onClose={() => setIsCloudModalOpen(false)}
+        onRefreshAll={refreshData}
+        onLockApp={handleLockApp}
+        onLogout={handleLogout}
       />
     </div>
   );

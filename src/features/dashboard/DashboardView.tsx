@@ -15,13 +15,15 @@ import {
   Settings,
   Sun,
   Moon,
-  Calendar
+  Calendar,
+  Cloud
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import type { Account, Category, Transaction } from '../transactions/types';
 import type { TaskReminder } from '../tasks/types';
 import type { Debt } from '../debts/types';
 import type { RateSource } from '../../shared/lib/exchangeRateService';
+import type { CloudSyncStatus } from '../../shared/lib/cloudSyncService';
 import { formatMoney } from '../../shared/lib/money';
 import { getTodayDateStr } from '../../shared/lib/storage';
 
@@ -47,6 +49,8 @@ interface DashboardViewProps {
   onNavigateToTab: (tab: 'history' | 'tasks' | 'debts' | 'analytics') => void;
   onOpenCalendar: () => void;
   onOpenBellagio: () => void;
+  cloudStatus?: CloudSyncStatus;
+  onOpenCloudSync?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -71,6 +75,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToTab,
   onOpenCalendar,
   onOpenBellagio,
+  cloudStatus = 'connected',
+  onOpenCloudSync,
 }) => {
   // Calcular saldos por cuenta
   const accountBalances = accounts.map((acc) => {
@@ -181,8 +187,46 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Controles: Calendario, Selector de Tema (Dark / Light) y Engranaje de Configuración */}
+        {/* Controles: Nube, Calendario, Selector de Tema (Dark / Light) y Engranaje */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {onOpenCloudSync && (
+            <button
+              onClick={onOpenCloudSync}
+              className="btn-icon"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 'var(--radius-full)',
+                background: theme === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.05)',
+                border: `1px solid ${cloudStatus === 'connected' ? 'rgba(16, 185, 129, 0.4)' : 'var(--border-subtle)'}`,
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+              }}
+              title={`Estado Nube: ${cloudStatus === 'connected' ? 'Sincronizado' : cloudStatus === 'syncing' ? 'Sincronizando' : 'Modo Local'}`}
+              aria-label="Estado y respaldo en la nube"
+            >
+              <Cloud
+                size={17}
+                color={cloudStatus === 'connected' ? '#10b981' : cloudStatus === 'syncing' ? '#38bdf8' : '#ef4444'}
+              />
+              <span
+                style={{
+                  position: 'absolute',
+                  bottom: 7,
+                  right: 7,
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  background: cloudStatus === 'connected' ? '#10b981' : cloudStatus === 'syncing' ? '#38bdf8' : '#ef4444',
+                  boxShadow: cloudStatus === 'connected' ? '0 0 6px #10b981' : 'none',
+                }}
+              />
+            </button>
+          )}
+
           <button
             onClick={onOpenCalendar}
             className="btn-icon"
