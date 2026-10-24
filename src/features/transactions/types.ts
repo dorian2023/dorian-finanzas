@@ -8,6 +8,7 @@ export interface Account {
   currency: Currency;
   icon: string;
   isCustom?: boolean;
+  isSavings?: boolean;
 }
 
 export interface Category {

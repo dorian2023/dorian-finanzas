@@ -16,7 +16,8 @@ import {
   Sun,
   Moon,
   Calendar,
-  Cloud
+  Cloud,
+  PiggyBank
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import type { Account, Category, Transaction } from '../transactions/types';
@@ -105,19 +106,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return { ...acc, balanceMinor };
   });
 
-  // Saldo total en USD y en VES
-  let totalUsdMinor = 0;
-  let totalVesMinor = 0;
+  // Identificar cuenta de ahorro ("Sobre")
+  const isSavingsAccount = (acc: Account) =>
+    acc.id === 'acc-sobre' || acc.name.toLowerCase().includes('sobre') || Boolean(acc.isSavings);
 
-  accountBalances.forEach((acc) => {
+  const availableAccounts = accountBalances.filter((acc) => !isSavingsAccount(acc));
+  const savingsAccounts = accountBalances.filter(isSavingsAccount);
+
+  // 1. Saldo DISPONIBLE (Líquido para gastar sin tocar el Sobre)
+  let availableUsdMinor = 0;
+  let availableVesMinor = 0;
+  availableAccounts.forEach((acc) => {
     if (acc.currency === 'USD') {
-      totalUsdMinor += acc.balanceMinor;
-      totalVesMinor += Math.round(acc.balanceMinor * todayRate);
+      availableUsdMinor += acc.balanceMinor;
+      availableVesMinor += Math.round(acc.balanceMinor * todayRate);
     } else {
-      totalVesMinor += acc.balanceMinor;
-      totalUsdMinor += Math.round(acc.balanceMinor / todayRate);
+      availableVesMinor += acc.balanceMinor;
+      availableUsdMinor += Math.round(acc.balanceMinor / todayRate);
     }
   });
+
+  // 2. Saldo en el SOBRE (Ahorro reservado)
+  let savingsUsdMinor = 0;
+  let savingsVesMinor = 0;
+  savingsAccounts.forEach((acc) => {
+    if (acc.currency === 'USD') {
+      savingsUsdMinor += acc.balanceMinor;
+      savingsVesMinor += Math.round(acc.balanceMinor * todayRate);
+    } else {
+      savingsVesMinor += acc.balanceMinor;
+      savingsUsdMinor += Math.round(acc.balanceMinor / todayRate);
+    }
+  });
+
+  // 3. Saldo Total Global (Disponible + Sobre)
+  const totalUsdMinor = availableUsdMinor + savingsUsdMinor;
+  const totalVesMinor = availableVesMinor + savingsVesMinor;
 
   // Gastos de hoy
   const todayStr = getTodayDateStr();
@@ -430,88 +454,185 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </button>
       </div>
 
-      {/* Hero Card Bimonetaria */}
+      {/* Hero Card Bimonetaria con Ahorro "Sobre" */}
       <div
         className="glass-panel pulse-glow"
         style={{
           background: 'var(--hero-gradient)',
           border: '1px solid var(--hero-border)',
           borderRadius: 24,
-          padding: 20,
+          padding: '18px 16px 14px',
           position: 'relative',
           overflow: 'hidden',
           marginBottom: 18,
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <div style={{
           position: 'absolute',
-          top: -20,
-          right: -20,
-          width: 130,
-          height: 130,
+          top: -25,
+          right: -25,
+          width: 140,
+          height: 140,
           borderRadius: '50%',
           background: 'var(--hero-glow)',
-          pointerEvents: 'none'
+          pointerEvents: 'none',
         }} />
 
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 6 }}>
-          Patrimonio Total Disponible
-        </div>
-
-        {/* Saldo en USD */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-          <span style={{
-            fontSize: 36,
-            fontWeight: 800,
-            fontFamily: 'var(--font-mono)',
-            color: '#34d399',
-            letterSpacing: -1,
-            lineHeight: 1,
-          }}>
-            {formatMoney(totalUsdMinor, 'USD')}
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-tertiary)' }}>USD</span>
-        </div>
-
-        {/* Saldo equivalente en Bolívares */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Equivalente:</span>
-          <span style={{
-            fontSize: 16,
-            fontWeight: 700,
-            fontFamily: 'var(--font-mono)',
-            color: activeRateSource === 'binance' ? '#fbbf24' : '#60a5fa',
-          }}>
-            {formatMoney(totalVesMinor, 'VES')}
-          </span>
-          <span className="badge" style={{
-            fontSize: 9,
-            padding: '2px 6px',
-            background: activeRateSource === 'binance' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-            color: activeRateSource === 'binance' ? '#fbbf24' : '#60a5fa',
-            border: `1px solid ${activeRateSource === 'binance' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(59, 130, 246, 0.4)'}`
-          }}>
-            {activeRateSource === 'binance' ? 'Tasa Binance' : 'Tasa BCV'}
-          </span>
-        </div>
-
-        {/* Resumen de gastos del día */}
+        {/* Fila Superior: Patrimonio Disponible (Principal) + Cápsula Sobre/Ahorro (Al lado, más pequeño) */}
         <div style={{
-          paddingTop: 12,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 10,
+          marginBottom: 10,
+        }}>
+          {/* Bloque Izquierdo: Patrimonio Disponible */}
+          <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+            <div style={{
+              fontSize: 10.5,
+              fontWeight: 800,
+              color: 'var(--text-secondary)',
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+              marginBottom: 4,
+            }}>
+              Patrimonio Disponible
+            </div>
+
+            {/* Saldo en USD */}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3 }}>
+              <span style={{
+                fontSize: 32,
+                fontWeight: 800,
+                fontFamily: 'var(--font-mono)',
+                color: '#34d399',
+                letterSpacing: -1,
+                lineHeight: 1,
+              }}>
+                {formatMoney(availableUsdMinor, 'USD')}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)' }}>USD</span>
+            </div>
+
+            {/* Equivalente en Bolívares */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Eq:</span>
+              <span style={{
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: 'var(--font-mono)',
+                color: activeRateSource === 'binance' ? '#fbbf24' : '#60a5fa',
+              }}>
+                {formatMoney(availableVesMinor, 'VES')}
+              </span>
+              <span className="badge" style={{
+                fontSize: 8.5,
+                padding: '1px 5px',
+                fontWeight: 800,
+                borderRadius: 6,
+                background: activeRateSource === 'binance' ? 'rgba(245, 158, 11, 0.18)' : 'rgba(59, 130, 246, 0.18)',
+                color: activeRateSource === 'binance' ? '#fbbf24' : '#60a5fa',
+                border: `1px solid ${activeRateSource === 'binance' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(59, 130, 246, 0.4)'}`
+              }}>
+                {activeRateSource === 'binance' ? 'Binance' : 'BCV'}
+              </span>
+            </div>
+          </div>
+
+          {/* Bloque Derecho: Micro-cápsula Sobre (Ahorro) */}
+          <div
+            style={{
+              flex: '0 0 auto',
+              background: theme === 'dark' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: 16,
+              padding: '8px 10px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
+            }}
+          >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              marginBottom: 2,
+            }}>
+              <PiggyBank size={12} color="#10b981" />
+              <span style={{
+                fontSize: 9.5,
+                fontWeight: 800,
+                color: '#10b981',
+                letterSpacing: 0.5,
+                textTransform: 'uppercase',
+              }}>
+                Sobre (Ahorro)
+              </span>
+            </div>
+
+            <div style={{
+              fontSize: 16,
+              fontWeight: 800,
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--text-primary)',
+              lineHeight: 1.1,
+            }}>
+              {formatMoney(savingsUsdMinor, 'USD')}
+            </div>
+
+            <div style={{
+              fontSize: 9.5,
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--text-tertiary)',
+              marginTop: 2,
+            }}>
+              {formatMoney(savingsVesMinor, 'VES')}
+            </div>
+          </div>
+        </div>
+
+        {/* Fila Inferior: Total Global (Disponible + Ahorro) y Gastado hoy */}
+        <div style={{
+          marginTop: 12,
+          paddingTop: 10,
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          fontSize: 12,
+          gap: 8,
+          fontSize: 11.5,
         }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Gastado hoy:</span>
-          <span style={{
-            fontWeight: 700,
-            fontFamily: 'var(--font-mono)',
-            color: todayExpensesUsdMinor > 0 ? '#fb7185' : 'var(--text-secondary)',
-          }}>
-            {formatMoney(todayExpensesUsdMinor, 'USD')} ({todayExpenses.length} gastos)
-          </span>
+          {/* Total Global con Ahorro */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, overflow: 'hidden' }}>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 11 }}>Total Global:</span>
+            <span style={{
+              fontWeight: 800,
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--text-primary)',
+              fontSize: 12,
+            }}>
+              {formatMoney(totalUsdMinor, 'USD')}
+            </span>
+            <span style={{ fontSize: 9.5, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+              ({formatMoney(totalVesMinor, 'VES')})
+            </span>
+          </div>
+
+          {/* Gastado hoy */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}>Gastado hoy:</span>
+            <span style={{
+              fontWeight: 700,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11.5,
+              color: todayExpensesUsdMinor > 0 ? '#fb7185' : 'var(--text-secondary)',
+            }}>
+              {formatMoney(todayExpensesUsdMinor, 'USD')}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -692,36 +813,63 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           paddingBottom: 6,
           scrollbarWidth: 'none',
         }}>
-          {accountBalances.map((acc) => (
-            <div
-              key={acc.id}
-              className="glass-card"
-              style={{
-                minWidth: 140,
-                padding: '12px 14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)' }}>
-                  {acc.name}
-                </span>
-                <span className={`badge ${acc.currency === 'USD' ? 'badge-usd' : 'badge-ves'}`} style={{ fontSize: 9 }}>
-                  {acc.currency}
-                </span>
+          {accountBalances.map((acc) => {
+            const isSavings = isSavingsAccount(acc);
+            return (
+              <div
+                key={acc.id}
+                className="glass-card"
+                style={{
+                  minWidth: 140,
+                  padding: '12px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                  border: isSavings
+                    ? '1.5px solid rgba(16, 185, 129, 0.45)'
+                    : '1px solid var(--border-subtle)',
+                  background: isSavings
+                    ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.06)')
+                    : undefined,
+                  boxShadow: isSavings ? '0 0 12px rgba(16, 185, 129, 0.12)' : undefined,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: isSavings ? '#10b981' : 'var(--text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}>
+                    {isSavings && <PiggyBank size={12} color="#10b981" />}
+                    {acc.name}
+                  </span>
+                  <span
+                    className={`badge ${isSavings ? 'badge-usd' : acc.currency === 'USD' ? 'badge-usd' : 'badge-ves'}`}
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 800,
+                      background: isSavings ? 'rgba(16, 185, 129, 0.2)' : undefined,
+                      color: isSavings ? '#34d399' : undefined,
+                      border: isSavings ? '1px solid rgba(16, 185, 129, 0.4)' : undefined,
+                    }}
+                  >
+                    {isSavings ? 'AHORRO' : acc.currency}
+                  </span>
+                </div>
+                <div style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: acc.currency === 'USD' ? 'var(--color-usd)' : 'var(--color-ves)',
+                }}>
+                  {formatMoney(acc.balanceMinor, acc.currency)}
+                </div>
               </div>
-              <div style={{
-                fontSize: 16,
-                fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
-                color: acc.currency === 'USD' ? 'var(--color-usd)' : 'var(--color-ves)',
-              }}>
-                {formatMoney(acc.balanceMinor, acc.currency)}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

@@ -17,7 +17,11 @@ export const DatabaseService = {
           name: row.name,
           currency: row.currency,
           icon: row.icon,
+          isSavings: row.id === 'acc-sobre' || row.name.toLowerCase().includes('sobre'),
         }));
+        if (!accounts.some((a) => a.id === 'acc-sobre' || a.name.toLowerCase() === 'sobre')) {
+          accounts.push({ id: 'acc-sobre', name: 'Sobre', currency: 'USD', icon: 'archive', isSavings: true });
+        }
         localStorage.setItem('dorian_accounts_v2', JSON.stringify(accounts));
         return accounts;
       }

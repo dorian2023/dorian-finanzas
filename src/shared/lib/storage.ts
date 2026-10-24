@@ -19,6 +19,7 @@ export const INITIAL_ACCOUNTS: Account[] = [
   { id: 'acc-bdv', name: 'Banco de Venezuela', currency: 'VES', icon: 'building-2' },
   { id: 'acc-binance', name: 'Binance', currency: 'USD', icon: 'wallet-cards' },
   { id: 'acc-zinli', name: 'Zinli', currency: 'USD', icon: 'credit-card' },
+  { id: 'acc-sobre', name: 'Sobre', currency: 'USD', icon: 'archive', isSavings: true },
 ];
 
 export const INITIAL_CATEGORIES: Category[] = [
@@ -110,7 +111,12 @@ export const StorageService = {
       }
       return INITIAL_ACCOUNTS;
     }
-    return JSON.parse(raw);
+    const accounts: Account[] = JSON.parse(raw);
+    if (!accounts.some((a) => a.id === 'acc-sobre' || a.name.toLowerCase() === 'sobre')) {
+      accounts.push({ id: 'acc-sobre', name: 'Sobre', currency: 'USD', icon: 'archive', isSavings: true });
+      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+    }
+    return accounts;
   },
 
   getCategories(): Category[] {
