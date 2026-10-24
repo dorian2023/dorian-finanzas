@@ -455,3 +455,42 @@ input:focus, select:focus, textarea:focus {
     transform: rotate(360deg);
   }
 }
+
+/* =====================================================================
+   CUSTOM SCROLLBARS (Impeccable Craft)
+   ===================================================================== */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.18);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.36);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+[data-theme="light"] * {
+  scrollbar-color: rgba(15, 23, 42, 0.18) transparent;
+}
+

@@ -285,7 +285,11 @@ export function App() {
             transactions={transactions}
             categories={categories}
             sources={sources}
+            accounts={accounts}
             todayRate={activeRate}
+            onOpenCalendar={() => setActiveTab('calendar')}
+            onEditTransaction={handleEditTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
           />
         )}
 
