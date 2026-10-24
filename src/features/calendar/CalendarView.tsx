@@ -17,6 +17,8 @@ interface CalendarViewProps {
   onBackToHome: () => void;
   onOpenAddExpenseForDate: (dateStr: string) => void;
   onOpenAddIncomeForDate: (dateStr: string) => void;
+  onEditTransaction?: (tx: Transaction) => void;
+  onDeleteTransaction?: (id: string) => void;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -29,6 +31,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onBackToHome,
   onOpenAddExpenseForDate,
   onOpenAddIncomeForDate,
+  onEditTransaction,
+  onDeleteTransaction,
 }) => {
   // Fecha actual en formato YYYY-MM-DD
   const now = new Date();
@@ -132,6 +136,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onSaveNote={saveDayNote}
         onOpenAddExpenseForDate={onOpenAddExpenseForDate}
         onOpenAddIncomeForDate={onOpenAddIncomeForDate}
+        onEditTransaction={onEditTransaction}
+        onDeleteTransaction={onDeleteTransaction}
       />
     </div>
   );

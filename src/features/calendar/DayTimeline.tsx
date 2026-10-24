@@ -13,8 +13,9 @@ import {
   Clock
 } from 'lucide-react';
 import type { DayActivity } from './types';
-import type { Account, Category } from '../transactions/types';
+import type { Account, Category, Transaction } from '../transactions/types';
 import { formatMoney } from '../../shared/lib/money';
+import { TransactionDetailModal } from '../transactions/TransactionDetailModal';
 
 interface DayTimelineProps {
   activity: DayActivity;
@@ -25,6 +26,8 @@ interface DayTimelineProps {
   onSaveNote: (dateStr: string, content: string) => void;
   onOpenAddExpenseForDate: (dateStr: string) => void;
   onOpenAddIncomeForDate: (dateStr: string) => void;
+  onEditTransaction?: (tx: Transaction) => void;
+  onDeleteTransaction?: (id: string) => void;
 }
 
 export const DayTimeline: React.FC<DayTimelineProps> = ({
@@ -36,10 +39,13 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
   onSaveNote,
   onOpenAddExpenseForDate,
   onOpenAddIncomeForDate,
+  onEditTransaction,
+  onDeleteTransaction,
 }) => {
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteContent, setNoteContent] = useState(activity.note || '');
   const [showImagePreview, setShowImagePreview] = useState<string | null>(null);
+  const [selectedTransactionForDetail, setSelectedTransactionForDetail] = useState<Transaction | null>(null);
 
   // Sincronizar estado local de la nota si cambia la fecha
   React.useEffect(() => {
@@ -321,16 +327,20 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
               return (
                 <div
                   key={tx.id}
+                  onClick={() => setSelectedTransactionForDetail(tx)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '10px',
+                    padding: '11px 12px',
                     borderRadius: 'var(--radius-md)',
                     background: 'var(--badge-bg-neutral)',
                     border: '1px solid var(--border-subtle)',
                     gap: 8,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
                   }}
+                  title="Ver detalles completos de esta transacción"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
                     {/* Icono del tipo */}
@@ -457,6 +467,18 @@ export const DayTimeline: React.FC<DayTimelineProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modal de Detalle Completo de la Transacción */}
+      <TransactionDetailModal
+        isOpen={Boolean(selectedTransactionForDetail)}
+        transaction={selectedTransactionForDetail}
+        accounts={accounts}
+        categories={categories}
+        todayRate={todayRate}
+        onClose={() => setSelectedTransactionForDetail(null)}
+        onEdit={onEditTransaction}
+        onDelete={onDeleteTransaction}
+      />
     </div>
   );
 };

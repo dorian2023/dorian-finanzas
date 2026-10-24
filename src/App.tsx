@@ -334,6 +334,8 @@ export function App() {
             onBackToHome={() => setActiveTab('home')}
             onOpenAddExpenseForDate={handleOpenExpenseForDate}
             onOpenAddIncomeForDate={handleOpenIncomeForDate}
+            onEditTransaction={handleEditTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
           />
         )}
       </main>
