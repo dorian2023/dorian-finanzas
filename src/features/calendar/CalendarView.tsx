@@ -47,13 +47,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
 
-  const { activityMap, getDayActivity, saveDayNote } = useCalendarData({
+  const { activityMap, getDayActivity, getMonthSummary, saveDayNote } = useCalendarData({
     transactions,
     tasks,
     todayRate,
   });
 
   const selectedActivity = getDayActivity(selectedDate);
+  const currentMonthSummary = getMonthSummary(currentYear, currentMonth);
 
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
@@ -113,6 +114,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         selectedDate={selectedDate}
         todayStr={todayStr}
         activityMap={activityMap}
+        monthSummary={currentMonthSummary}
+        todayRate={todayRate}
         onSelectDate={(date) => setSelectedDate(date)}
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}

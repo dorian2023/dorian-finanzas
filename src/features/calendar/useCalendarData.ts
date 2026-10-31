@@ -10,6 +10,19 @@ interface UseCalendarDataParams {
   todayRate: number;
 }
 
+export interface MonthSummary {
+  year: number;
+  month: number;
+  monthPrefix: string;
+  totalIncomeEquivUSD: number;
+  totalExpenseEquivUSD: number;
+  netBalanceEquivUSD: number;
+  incomeCount: number;
+  expenseCount: number;
+  totalTransactionsCount: number;
+  savingsRate: number;
+}
+
 export function useCalendarData({
   transactions,
   tasks,
@@ -146,9 +159,58 @@ export function useCalendarData({
     [activityMap, notesMap]
   );
 
+  const getMonthSummary = useCallback(
+    (year: number, month: number): MonthSummary => {
+      const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+      let totalIncomeEquivUSD = 0;
+      let totalExpenseEquivUSD = 0;
+      let incomeCount = 0;
+      let expenseCount = 0;
+
+      for (const tx of transactions) {
+        if (!tx.occurredAt || !tx.occurredAt.startsWith(monthPrefix)) continue;
+        const rate = tx.rateUsed || todayRate || 1;
+        const usdEquiv =
+          tx.currency === 'USD'
+            ? tx.amountMinor
+            : Math.round(tx.amountMinor / rate);
+
+        if (tx.type === 'income') {
+          totalIncomeEquivUSD += usdEquiv;
+          incomeCount++;
+        } else if (tx.type === 'expense') {
+          totalExpenseEquivUSD += usdEquiv;
+          expenseCount++;
+        }
+      }
+
+      const netBalanceEquivUSD = totalIncomeEquivUSD - totalExpenseEquivUSD;
+      const totalTransactionsCount = incomeCount + expenseCount;
+      const savingsRate =
+        totalIncomeEquivUSD > 0
+          ? Math.max(0, Math.round((netBalanceEquivUSD / totalIncomeEquivUSD) * 100))
+          : 0;
+
+      return {
+        year,
+        month,
+        monthPrefix,
+        totalIncomeEquivUSD,
+        totalExpenseEquivUSD,
+        netBalanceEquivUSD,
+        incomeCount,
+        expenseCount,
+        totalTransactionsCount,
+        savingsRate,
+      };
+    },
+    [transactions, todayRate]
+  );
+
   return {
     activityMap,
     getDayActivity,
+    getMonthSummary,
     saveDayNote,
     notesMap,
   };

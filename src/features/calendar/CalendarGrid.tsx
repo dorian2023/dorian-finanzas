@@ -1,6 +1,8 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, TrendingUp, TrendingDown, Scale } from 'lucide-react';
 import type { DayActivity } from './types';
+import type { MonthSummary } from './useCalendarData';
+import { formatMoney } from '../../shared/lib/money';
 
 interface CalendarGridProps {
   currentYear: number;
@@ -8,6 +10,8 @@ interface CalendarGridProps {
   selectedDate: string; // YYYY-MM-DD
   todayStr: string; // YYYY-MM-DD
   activityMap: Record<string, DayActivity>;
+  monthSummary?: MonthSummary;
+  todayRate: number;
   onSelectDate: (dateStr: string) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
@@ -37,6 +41,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   selectedDate,
   todayStr,
   activityMap,
+  monthSummary,
+  todayRate,
   onSelectDate,
   onPrevMonth,
   onNextMonth,
@@ -195,6 +201,228 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Resumen Financiero del Mes Seleccionado */}
+      {monthSummary && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: '10px 10px',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.07)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  color: 'var(--text-secondary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.6,
+                }}
+              >
+                Totales de {MONTH_NAMES[currentMonth]}
+              </span>
+              <span
+                style={{
+                  fontSize: 9.5,
+                  padding: '1px 6px',
+                  borderRadius: 999,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  color: 'var(--text-tertiary)',
+                  fontWeight: 600,
+                }}
+              >
+                {monthSummary.totalTransactionsCount} {monthSummary.totalTransactionsCount === 1 ? 'movimiento' : 'movimientos'}
+              </span>
+            </div>
+
+            {monthSummary.totalIncomeEquivUSD > 0 && (
+              <span
+                style={{
+                  fontSize: 9.5,
+                  fontWeight: 700,
+                  color: monthSummary.netBalanceEquivUSD >= 0 ? '#34d399' : '#fb7185',
+                }}
+              >
+                {monthSummary.netBalanceEquivUSD >= 0 ? 'Ahorro: ' : 'Déficit: '}
+                {monthSummary.savingsRate}%
+              </span>
+            )}
+          </div>
+
+          {/* Grid de 3 Métricas del Mes: Ingresos, Gastos y Balance */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 6,
+              width: '100%',
+              boxSizing: 'border-box',
+            }}
+          >
+            {/* Ingresos del Mes */}
+            <div
+              style={{
+                padding: '8px 6px',
+                borderRadius: 10,
+                background: 'var(--act-income-bg)',
+                border: '1px solid var(--act-income-border)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                minWidth: 0,
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--act-income-text)' }}>
+                <TrendingUp size={11} />
+                <span style={{ fontSize: 9, fontWeight: 800 }}>Ingresos</span>
+              </div>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--act-income-text)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                +{formatMoney(monthSummary.totalIncomeEquivUSD, 'USD')}
+              </span>
+              <span
+                style={{
+                  fontSize: 9,
+                  opacity: 0.8,
+                  color: 'var(--act-income-text)',
+                  fontFamily: 'var(--font-mono)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                Bs. {formatMoney(Math.round(monthSummary.totalIncomeEquivUSD * todayRate), 'VES').replace('Bs. ', '')}
+              </span>
+            </div>
+
+            {/* Gastos del Mes */}
+            <div
+              style={{
+                padding: '8px 6px',
+                borderRadius: 10,
+                background: 'var(--act-expense-bg)',
+                border: '1px solid var(--act-expense-border)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                minWidth: 0,
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--act-expense-text)' }}>
+                <TrendingDown size={11} />
+                <span style={{ fontSize: 9, fontWeight: 800 }}>Gastos</span>
+              </div>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--act-expense-text)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                -{formatMoney(monthSummary.totalExpenseEquivUSD, 'USD')}
+              </span>
+              <span
+                style={{
+                  fontSize: 9,
+                  opacity: 0.8,
+                  color: 'var(--act-expense-text)',
+                  fontFamily: 'var(--font-mono)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                Bs. {formatMoney(Math.round(monthSummary.totalExpenseEquivUSD * todayRate), 'VES').replace('Bs. ', '')}
+              </span>
+            </div>
+
+            {/* Balance Neto del Mes */}
+            <div
+              style={{
+                padding: '8px 6px',
+                borderRadius: 10,
+                background: monthSummary.netBalanceEquivUSD >= 0
+                  ? 'rgba(16, 185, 129, 0.12)'
+                  : 'rgba(239, 68, 68, 0.12)',
+                border: monthSummary.netBalanceEquivUSD >= 0
+                  ? '1px solid rgba(16, 185, 129, 0.3)'
+                  : '1px solid rgba(239, 68, 68, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                minWidth: 0,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  color: monthSummary.netBalanceEquivUSD >= 0 ? '#10b981' : '#f43f5e',
+                }}
+              >
+                <Scale size={11} />
+                <span style={{ fontSize: 9, fontWeight: 800 }}>Balance</span>
+              </div>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: monthSummary.netBalanceEquivUSD >= 0 ? '#10b981' : '#f43f5e',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {monthSummary.netBalanceEquivUSD >= 0 ? '+' : ''}
+                {formatMoney(monthSummary.netBalanceEquivUSD, 'USD')}
+              </span>
+              <span
+                style={{
+                  fontSize: 9,
+                  opacity: 0.8,
+                  color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-mono)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                Bs. {formatMoney(Math.round(monthSummary.netBalanceEquivUSD * todayRate), 'VES').replace('Bs. ', '')}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Días de la semana (L, M, M, J, V, S, D) */}
       <div
