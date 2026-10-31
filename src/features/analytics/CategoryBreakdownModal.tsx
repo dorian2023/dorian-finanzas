@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+/*  */import React, { useState, useMemo } from 'react';
 import {
   X,
   TrendingDown,
@@ -444,8 +444,8 @@ export const CategoryBreakdownModal: React.FC<CategoryBreakdownModalProps> = ({
               const convertedMinor = isUSD
                 ? Math.round(tx.amountMinor * rate)
                 : rate > 0
-                ? Math.round(tx.amountMinor / rate)
-                : 0;
+                  ? Math.round(tx.amountMinor / rate)
+                  : 0;
               const convertedCurrency = isUSD ? 'VES' : 'USD';
 
               // Formato de fecha amigable en español
@@ -454,11 +454,11 @@ export const CategoryBreakdownModal: React.FC<CategoryBreakdownModalProps> = ({
               const dateLabel = isToday
                 ? `Hoy, ${txDate.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}`
                 : txDate.toLocaleDateString('es-VE', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  });
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
 
               // Título principal
               const title = tx.merchant?.trim() || tx.note?.trim() || category.name;

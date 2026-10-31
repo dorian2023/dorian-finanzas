@@ -103,18 +103,42 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   // Categoría top
   const topCategory = sortedCategories[0];
 
-  // Desglose de ingresos por empleador (Policía vs Bellagio)
+  // Desglose de ingresos por empleador (Policía vs Bellagio vs Otros)
   let policiaIncomeVesMinor = 0;
+  let policiaIncomeUsdMinor = 0;
   let bellagioIncomeUsdMinor = 0;
+  let otherIncomeUsdMinor = 0;
 
   filtered
     .filter((tx) => tx.type === 'income')
     .forEach((tx) => {
       const source = sources.find((s) => s.id === tx.sourceId);
-      if (source?.employer === 'Policía' || tx.currency === 'VES') {
-        policiaIncomeVesMinor += tx.amountMinor;
+      const isPolicia =
+        source?.employer === 'Policía' ||
+        tx.sourceId === 'src-policia' ||
+        tx.merchant?.toLowerCase().includes('polic');
+
+      const isBellagio =
+        source?.employer === 'Muebles Bellagio' ||
+        tx.sourceId === 'src-bellagio' ||
+        tx.merchant?.toLowerCase().includes('bellagio');
+
+      const usdEquiv =
+        tx.currency === 'USD'
+          ? tx.amountMinor
+          : Math.round(tx.amountMinor / (tx.rateUsed || todayRate));
+
+      if (isPolicia) {
+        if (tx.currency === 'VES') {
+          policiaIncomeVesMinor += tx.amountMinor;
+        } else {
+          policiaIncomeVesMinor += Math.round(tx.amountMinor * (tx.rateUsed || todayRate));
+        }
+        policiaIncomeUsdMinor += usdEquiv;
+      } else if (isBellagio) {
+        bellagioIncomeUsdMinor += usdEquiv;
       } else {
-        bellagioIncomeUsdMinor += tx.amountMinor;
+        otherIncomeUsdMinor += usdEquiv;
       }
     });
 
@@ -431,7 +455,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         >
           Ingresos por Empleo
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: otherIncomeUsdMinor > 0 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: 10 }}>
           <div className="glass-card" style={{ padding: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <Shield size={16} color="#60a5fa" />
@@ -439,7 +463,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             </div>
             <div
               style={{
-                fontSize: 16,
+                fontSize: otherIncomeUsdMinor > 0 ? 14 : 16,
                 fontWeight: 800,
                 fontFamily: 'var(--font-mono)',
                 color: '#fbbf24',
@@ -447,7 +471,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             >
               {formatMoney(policiaIncomeVesMinor, 'VES')}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+            <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
               ≈ {formatMoney(Math.round(policiaIncomeVesMinor / todayRate), 'USD')}
             </div>
           </div>
@@ -459,7 +483,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             </div>
             <div
               style={{
-                fontSize: 16,
+                fontSize: otherIncomeUsdMinor > 0 ? 14 : 16,
                 fontWeight: 800,
                 fontFamily: 'var(--font-mono)',
                 color: '#34d399',
@@ -467,10 +491,32 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             >
               {formatMoney(bellagioIncomeUsdMinor, 'USD')}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-              Dólares en efectivo
+            <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+              Comisiones y ventas
             </div>
           </div>
+
+          {otherIncomeUsdMinor > 0 && (
+            <div className="glass-card" style={{ padding: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <Wallet size={16} color="#38bdf8" />
+                <span style={{ fontSize: 13, fontWeight: 800, color: '#38bdf8' }}>Otros</span>
+              </div>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: '#38bdf8',
+                }}
+              >
+                {formatMoney(otherIncomeUsdMinor, 'USD')}
+              </div>
+              <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                Extras y ventas
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
